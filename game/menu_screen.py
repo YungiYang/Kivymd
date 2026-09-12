@@ -2,6 +2,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.label import MDLabel
 from kivymd.uix.button import MDButton, MDButtonText
+from kivy.app import App
 
 
 class MenuScreen(MDScreen):
@@ -30,10 +31,25 @@ class MenuScreen(MDScreen):
             theme_bg_color="Custom",
             md_bg_color=(0.1, 0.65, 0.95, 1.0),
         )
+
+        Exit_btn = MDButton(
+            MDButtonText(text="ВИХІД", font_style="Title", role="medium"),
+            style="filled",
+            size_hint=(1, None),
+            height=54,
+            theme_bg_color="Custom",
+            md_bg_color=(0.1, 0.65, 0.95, 1.0),
+        )
+
         start_btn.bind(on_release=self.start_game)
+        Exit_btn.bind(on_release=self.exit_game)
         layout.add_widget(start_btn)
+        layout.add_widget(Exit_btn)
 
         self.add_widget(layout)
 
     def start_game(self, *args):
         self.manager.current = "game_screen"
+
+    def exit_game(self, *args):
+        App.get_running_app().stop()
