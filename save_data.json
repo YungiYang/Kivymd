@@ -1,0 +1,22 @@
+{
+  "credits": 122980,
+  "high_score": 73030,
+  "unlocked_ships": [
+    "striker",
+    "beam_titan",
+    "plasma_vanguard",
+    "storm_valkyrie",
+    "nova_hunter",
+    "phantom_shade"
+  ],
+  "selected_ship": "striker",
+  "sound_enabled": true,
+  "music_enabled": true,
+  "materials": {
+    "stellar_dust": 54,
+    "plasma_core": 1,
+    "quantum_alloy": 2,
+    "void_essence": 2
+  },
+  "crafted_ships": []
+}

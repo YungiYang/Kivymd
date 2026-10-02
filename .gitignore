@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Kivy / Buildozer
+.buildozer/
+bin/
+.kivy/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+Thumbs.db
