@@ -255,9 +255,9 @@ def test_boss_and_enemy_types():
     boss2 = Boss(150, 700, boss_level=2)
     boss3 = Boss(150, 700, boss_level=3)
 
-    assert boss1.max_hp == 300
-    assert boss2.max_hp == 500
-    assert boss3.max_hp == 700
+    assert boss1.max_hp == 2500
+    assert boss2.max_hp == 4000
+    assert boss3.max_hp == 5500
     assert boss2.max_hp > boss1.max_hp, "HP боса має зростати з рівнем"
     assert boss2.speed > boss1.speed, "Швидкість боса має зростати з рівнем"
     assert boss2.score_value > boss1.score_value, "Нагорода за боса має зростати"

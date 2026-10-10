@@ -7,7 +7,7 @@ import random
 import math
 from kivy.uix.widget import Widget
 from kivy.graphics import (
-    Color, Rectangle, Ellipse, Triangle, Line
+    Color, Rectangle, Ellipse, Triangle, Line, RoundedRectangle
 )
 from game.constants import (
     ENEMY_WIDTH, ENEMY_HEIGHT,
@@ -312,124 +312,188 @@ class AdvancedEnemy(Widget):
             t = self.enemy_type
 
             if t == "drone":
-                # Маленький шестикутний дрон
-                Color(0.85, 0.65, 0.15, 0.95)
+                # Швидкий тактичний розвідувальний дрон MK-II
+                # Полум'я мікродвигунів
+                Color(1.0, 0.65, 0.15, 0.85)
                 Triangle(points=[
-                    self.x, self.y + self.height * 0.5,
+                    cx - 4, self.y + self.height,
+                    cx, self.y + self.height + 6,
+                    cx + 4, self.y + self.height,
+                ])
+                # Гранований аеродинамічний корпус
+                Color(0.16, 0.20, 0.28, 1.0)
+                Triangle(points=[
+                    self.x, cy,
                     cx, self.y + self.height,
-                    self.x + self.width, self.y + self.height * 0.5,
+                    self.x + self.width, cy,
                 ])
                 Triangle(points=[
-                    self.x + self.width * 0.2, self.y,
-                    cx, self.y + self.height * 0.55,
-                    self.x + self.width * 0.8, self.y,
+                    self.x + 3, cy,
+                    cx, self.y + 2,
+                    self.x + self.width - 3, cy,
                 ])
-                Color(1.0, 0.9, 0.3, 0.9)
-                Ellipse(pos=(cx - 4, self.y + self.height / 2 - 4), size=(8, 8))
+                # Золотисті кромки крил
+                Color(0.95, 0.72, 0.20, 0.95)
+                Line(points=[self.x, cy, cx, self.y + 2, self.x + self.width, cy], width=1.5)
+                # Сенсорне фотонне око
+                Color(0.2, 0.9, 1.0, 0.95)
+                Ellipse(pos=(cx - 3.5, cy - 3.5), size=(7, 7))
 
             elif t == "turret":
-                # Нерухома квадратна турель
-                Color(0.3, 0.55, 0.35, 1.0)
-                Rectangle(pos=(self.x + 4, self.y + 4), size=(self.width - 8, self.height - 8))
-                Color(0.5, 0.9, 0.5, 1.0)
-                Rectangle(pos=(self.x + 10, self.y + 16), size=(self.width - 20, self.height - 20))
-                Color(0.2, 1.0, 0.4, 0.9)
-                Line(points=[cx, self.y, cx, self.y - 12], width=3.0)
+                # Важка орбітальна автоматична турель
+                # Броньована опора
+                Color(0.18, 0.22, 0.28, 1.0)
+                RoundedRectangle(pos=(self.x + 2, self.y + 4), size=(self.width - 4, self.height - 8), radius=[6])
+                # Внутрішня поворотна тумба
+                Color(0.28, 0.35, 0.44, 1.0)
+                Ellipse(pos=(cx - 12, cy - 10), size=(24, 24))
+                # Неоновий прицільний блок
+                Color(0.2, 1.0, 0.45, 0.95)
+                Rectangle(pos=(cx - 6, cy - 4), size=(12, 4))
+                # Спарені гарматні стволи з полум'ягасниками
+                Color(0.45, 0.55, 0.65, 1.0)
+                Line(points=[cx - 6, cy, cx - 6, self.y - 12], width=2.8)
+                Line(points=[cx + 6, cy, cx + 6, self.y - 12], width=2.8)
+                Color(0.2, 1.0, 0.45, 0.8)
+                Ellipse(pos=(cx - 8, self.y - 13), size=(4, 4))
+                Ellipse(pos=(cx + 4, self.y - 13), size=(4, 4))
 
             elif t == "shielder":
-                # Ворог зі щитом навколо
-                Color(0.35, 0.6, 0.85, 0.9)
+                # Захисний фрегат з дефлекторним щитом
+                Color(0.15, 0.22, 0.35, 1.0)
                 Triangle(points=[
-                    self.x + 6, self.y + 8,
+                    self.x + 4, self.y + 8,
                     cx, self.y + self.height,
-                    self.x + self.width - 6, self.y + 8,
+                    self.x + self.width - 4, self.y + 8,
                 ])
-                Color(0.6, 0.8, 1.0, 1.0)
+                # Броньові щитки
+                Color(0.35, 0.55, 0.85, 1.0)
                 Triangle(points=[
-                    self.x + 12, self.y + 18,
-                    cx, self.y + self.height - 6,
-                    self.x + self.width - 12, self.y + 18,
+                    self.x + 10, self.y + 16,
+                    cx, self.y + self.height - 4,
+                    self.x + self.width - 10, self.y + 16,
                 ])
+                # Енергетичний реактор щита
+                Color(0.3, 0.85, 1.0, 0.95)
+                Ellipse(pos=(cx - 5, cy - 4), size=(10, 10))
                 if self.shield > 0:
-                    shield_r = self.width * 0.65
-                    Color(0.3, 0.85, 1.0, 0.45)
-                    Line(circle=(cx, self.y + self.height / 2, shield_r), width=2.2)
-                    Color(0.3, 0.85, 1.0, 0.15)
+                    shield_r = self.width * 0.68
+                    # Багатошаровий дефлекторний бар'єр
+                    Color(0.3, 0.85, 1.0, 0.20)
                     Ellipse(
-                        pos=(cx - shield_r, self.y + self.height / 2 - shield_r),
+                        pos=(cx - shield_r, cy - shield_r),
                         size=(shield_r * 2, shield_r * 2)
                     )
+                    Color(0.4, 0.95, 1.0, 0.85)
+                    Line(circle=(cx, cy, shield_r), width=2.2)
+                    Color(0.2, 0.7, 1.0, 0.5)
+                    Line(circle=(cx, cy, shield_r - 4), width=1.0)
 
             elif t == "kamikaze":
-                # Ромбовидний камікадзе — вогненне забарвлення
-                Color(1.0, 0.2, 0.1, 1.0)
+                # Швидкісний перехоплювач-камікадзе
+                # Вогненний реактивний факел
+                Color(1.0, 0.45, 0.05, 0.9)
+                Triangle(points=[
+                    cx - 5, self.y + self.height,
+                    cx, self.y + self.height + 12,
+                    cx + 5, self.y + self.height,
+                ])
+                Color(1.0, 0.9, 0.2, 1.0)
+                Triangle(points=[
+                    cx - 2, self.y + self.height,
+                    cx, self.y + self.height + 6,
+                    cx + 2, self.y + self.height,
+                ])
+                # Стрілоподібні хижі крила
+                Color(0.65, 0.12, 0.12, 1.0)
                 Triangle(points=[cx, self.y + self.height, self.x, cy, cx, self.y])
                 Triangle(points=[cx, self.y + self.height, self.x + self.width, cy, cx, self.y])
-                Color(1.0, 0.85, 0.2, 0.9)
-                Ellipse(pos=(cx - 6, self.y + self.height / 2 - 6), size=(12, 12))
+                # Перевантажене плазмове ядро
+                Color(1.0, 0.85, 0.2, 0.95)
+                Ellipse(pos=(cx - 6, cy - 6), size=(12, 12))
+                Color(1.0, 1.0, 0.9, 1.0)
+                Ellipse(pos=(cx - 2.5, cy - 2.5), size=(5, 5))
 
             elif t == "healer":
-                # Хілер — зелений хрест
-                Color(0.2, 0.85, 0.4, 1.0)
-                Rectangle(pos=(cx - 5, self.y + 5), size=(10, self.height - 10))
-                Rectangle(pos=(self.x + 5, self.y + self.height / 2 - 5), size=(self.width - 10, 10))
-                Color(0.5, 1.0, 0.6, 0.9)
-                Ellipse(pos=(cx - 7, self.y + self.height / 2 - 7), size=(14, 14))
+                # Ремонтний нано-фрегат
+                Color(0.14, 0.26, 0.22, 1.0)
+                RoundedRectangle(pos=(self.x + 4, self.y + 4), size=(self.width - 8, self.height - 8), radius=[6])
+                # Медичний смарагдовий хрест
+                Color(0.25, 0.95, 0.55, 0.95)
+                Rectangle(pos=(cx - 4, self.y + 6), size=(8, self.height - 12))
+                Rectangle(pos=(self.x + 6, cy - 4), size=(self.width - 12, 8))
+                # Фотонний випромінювач нанітів
+                Color(0.7, 1.0, 0.85, 1.0)
+                Ellipse(pos=(cx - 4, cy - 4), size=(8, 8))
 
             elif t == "stealth":
-                # Стелс — напівпрозорий трикутник
-                alpha = 0.25 if self.stealth_active else 0.85
-                Color(0.6, 0.6, 0.9, alpha)
+                # Стелс-шпигун з оптичним маскуванням
+                alpha = 0.25 if self.stealth_active else 0.88
+                Color(0.25, 0.28, 0.38, alpha)
                 Triangle(points=[
-                    self.x + 4, self.y + 6,
+                    self.x + 3, self.y + 4,
                     cx, self.y + self.height,
-                    self.x + self.width - 4, self.y + 6,
+                    self.x + self.width - 3, self.y + 4,
                 ])
-                Color(0.85, 0.85, 1.0, alpha)
-                Line(points=[cx, self.y + self.height, cx, self.y + 6], width=1.5)
+                # Грані антирадарної геометрії
+                Color(0.55, 0.65, 0.9, alpha)
+                Line(points=[self.x + 3, self.y + 4, cx, self.y + 4, cx, self.y + self.height], width=1.5)
+                # Голковий квантовий приціл
+                Color(0.4, 0.85, 1.0, alpha)
+                Line(points=[cx, cy, cx, self.y - 6], width=2.0)
 
             elif t == "splitter":
-                # Splitter — два сегменти
-                Color(0.75, 0.4, 0.75, 1.0)
+                # Подвійний кластерний фрегат
+                Color(0.45, 0.18, 0.55, 1.0)
                 Triangle(points=[
                     self.x, self.y + self.height,
-                    cx - 2, self.y,
-                    self.x + self.width / 2.2, self.y + self.height,
+                    cx - 3, self.y + 4,
+                    cx - 3, self.y + self.height,
                 ])
                 Triangle(points=[
-                    self.x + self.width / 2.2, self.y + self.height,
-                    cx + 2, self.y,
+                    cx + 3, self.y + self.height,
+                    cx + 3, self.y + 4,
                     self.x + self.width, self.y + self.height,
                 ])
-                Color(1.0, 0.5, 1.0, 0.9)
-                Line(points=[cx, self.y + self.height, cx, self.y + 4], width=2.0)
+                # Плазмова перемичка розщеплення
+                Color(0.9, 0.4, 1.0, 0.95)
+                Line(points=[cx - 4, cy, cx + 4, cy], width=3.0)
+                Ellipse(pos=(cx - 3, cy - 3), size=(6, 6))
 
             elif t == "titan":
-                # Масивний титан
-                Color(0.3, 0.3, 0.45, 1.0)
-                Rectangle(pos=(self.x + 4, self.y + 4), size=(self.width - 8, self.height - 8))
-                Color(0.55, 0.55, 0.75, 1.0)
+                # Важкий флагманський дредноут
+                Color(0.18, 0.20, 0.28, 1.0)
+                RoundedRectangle(pos=(self.x + 4, self.y + 6), size=(self.width - 8, self.height - 12), radius=[8])
+                Color(0.32, 0.38, 0.50, 1.0)
                 Triangle(points=[
-                    self.x + 8, self.y + 20,
+                    self.x + 6, self.y + 18,
                     cx, self.y + self.height - 4,
-                    self.x + self.width - 8, self.y + 20,
+                    self.x + self.width - 6, self.y + 18,
                 ])
-                Color(0.85, 0.85, 1.0, 0.9)
-                Ellipse(pos=(cx - 8, self.y + self.height / 2 - 8), size=(16, 16))
-                # Гармати
-                Color(0.4, 0.4, 0.7, 0.9)
-                Line(points=[self.x + 8, self.y, self.x + 8, self.y - 14], width=3.0)
-                Line(points=[self.x + self.width - 8, self.y, self.x + self.width - 8, self.y - 14], width=3.0)
+                # Важкі подвійні рейкотрони
+                Color(0.5, 0.6, 0.75, 1.0)
+                Line(points=[self.x + 10, cy, self.x + 10, self.y - 14], width=3.5)
+                Line(points=[self.x + self.width - 10, cy, self.x + self.width - 10, self.y - 14], width=3.5)
+                # Масивне термоядерне ядро
+                Color(0.3, 0.75, 1.0, 0.95)
+                Ellipse(pos=(cx - 9, cy - 9), size=(18, 18))
+                Color(0.9, 0.95, 1.0, 1.0)
+                Ellipse(pos=(cx - 4, cy - 4), size=(8, 8))
 
-            # HP-смужка
+            # Військова тактична рамка смужки міцності (HUD Health Bracket)
             if self.hp < self.max_hp:
-                bar_w = self.width
-                Color(0.1, 0.12, 0.2, 0.85)
-                Rectangle(pos=(self.x, self.y + self.height + 3), size=(bar_w, 4.0))
+                bar_w = self.width + 4
+                bar_h = 4.0
+                bar_x = self.x - 2
+                bar_y = self.y + self.height + 4
+                Color(0.04, 0.08, 0.14, 0.85)
+                RoundedRectangle(pos=(bar_x, bar_y), size=(bar_w, bar_h), radius=[2])
                 ratio = max(0.0, self.hp / self.max_hp)
-                hp_color = (0.2, 0.95, 0.35, 0.95) if ratio > 0.5 else (1.0, 0.3, 0.2, 0.95)
+                hp_color = (0.2, 0.95, 0.4, 0.95) if ratio > 0.5 else (1.0, 0.25, 0.25, 0.95)
                 Color(*hp_color)
-                Rectangle(pos=(self.x, self.y + self.height + 3), size=(bar_w * ratio, 4.0))
+                RoundedRectangle(pos=(bar_x, bar_y), size=(bar_w * ratio, bar_h), radius=[2])
+                Color(0.3, 0.75, 1.0, 0.6)
+                Line(rounded_rectangle=[bar_x, bar_y, bar_w, bar_h, 2], width=0.8)
 
 
 # ─── Таблиці появи ворогів за біомом ─────────────────────────────────────────
@@ -521,10 +585,10 @@ class EliteBoss(Widget):
         self.move_dir = 1
 
         # Масштабування HP та швидкості
-        self.max_hp = 800 + (boss_level - 5) * 300
+        self.max_hp = 6000 + (boss_level - 5) * 2000
         self.hp = self.max_hp
-        self.speed = 60.0 + min(80.0, (boss_level - 4) * 12.0)
-        self.score_value = 3000 + boss_level * 1000
+        self.speed = 65.0 + min(100.0, (boss_level - 4) * 15.0)
+        self.score_value = 5000 + boss_level * 2000
 
         # Атаки
         self.attack_mode = 0
@@ -695,12 +759,12 @@ class EliteBoss(Widget):
         cy = self.y
 
         with self.canvas:
-            # Аура фази
+            # 1. Аура фази боса (енергетичний щитовий ореол)
             phase_colors = [
-                (0.3, 0.6, 1.0, 0.12),   # Фаза 0 — синя
-                (1.0, 0.7, 0.1, 0.15),   # Фаза 1 — жовта
-                (1.0, 0.3, 0.1, 0.18),   # Фаза 2 — червона
-                (0.7, 0.0, 0.9, 0.22),   # Фаза 3 — фіолетова
+                (0.2, 0.6, 1.0, 0.16),   # Фаза 0 — синій іонний щит
+                (1.0, 0.7, 0.1, 0.18),   # Фаза 1 — перевантаження плазми (янтар)
+                (1.0, 0.25, 0.1, 0.22),  # Фаза 2 — критичний стан (червоний)
+                (0.8, 0.1, 1.0, 0.26),   # Фаза 3 — темна сингулярність (фіолетовий)
             ]
             aura = phase_colors[min(self.phase, 3)]
             Color(*aura)
@@ -709,53 +773,90 @@ class EliteBoss(Widget):
                 size=(self.width * 1.5, self.height + 30)
             )
 
-            # Корпус боса
-            Color(0.18, 0.18, 0.28, 1.0)
-            Rectangle(pos=(self.x + 8, cy + 12), size=(self.width - 16, self.height - 22))
+            # 2. Факели маршових термоядерних двигунів
+            Color(1.0, 0.6, 0.15, 0.9)
+            Triangle(points=[
+                cx - 36, cy + self.height - 10,
+                cx - 30, cy + self.height + 16,
+                cx - 24, cy + self.height - 10,
+            ])
+            Triangle(points=[
+                cx + 24, cy + self.height - 10,
+                cx + 30, cy + self.height + 16,
+                cx + 36, cy + self.height - 10,
+            ])
+            # Білі ядра полум'я
+            Color(1.0, 1.0, 0.8, 1.0)
+            Triangle(points=[
+                cx - 33, cy + self.height - 10,
+                cx - 30, cy + self.height + 8,
+                cx - 27, cy + self.height - 10,
+            ])
+            Triangle(points=[
+                cx + 27, cy + self.height - 10,
+                cx + 30, cy + self.height + 8,
+                cx + 33, cy + self.height - 10,
+            ])
 
-            Color(0.35, 0.35, 0.55, 1.0)
+            # 3. Важкий титановий корпус флагмана
+            Color(0.12, 0.14, 0.22, 1.0)
+            RoundedRectangle(pos=(self.x + 8, cy + 12), size=(self.width - 16, self.height - 24), radius=[10])
+
+            # 4. Броньові накладки та стрілоподібні спонсони
+            Color(0.26, 0.30, 0.44, 1.0)
             Triangle(points=[
                 self.x + 10, cy + 22,
-                cx, cy + self.height,
+                cx, cy + self.height - 2,
                 self.x + self.width - 10, cy + 22,
             ])
 
-            # Крила
-            Color(0.25, 0.25, 0.40, 1.0)
-            Triangle(points=[cx - 25, cy + 18, self.x, cy + 8, cx - 10, cy + 30])
-            Triangle(points=[cx + 25, cy + 18, self.x + self.width, cy + 8, cx + 10, cy + 30])
+            # 5. Бокові важкі крила-консолі
+            Color(0.20, 0.22, 0.34, 1.0)
+            Triangle(points=[cx - 25, cy + 18, self.x, cy + 8, cx - 10, cy + 34])
+            Triangle(points=[cx + 25, cy + 18, self.x + self.width, cy + 8, cx + 10, cy + 34])
+            Color(0.35, 0.7, 1.0, 0.7)
+            Line(points=[self.x, cy + 8, cx - 25, cy + 18], width=1.5)
+            Line(points=[self.x + self.width, cy + 8, cx + 25, cy + 18], width=1.5)
 
-            # Зброя
-            Color(0.5, 0.5, 0.75, 0.9)
-            Line(points=[self.x + 16, cy, self.x + 16, cy - 20], width=3.5)
-            Line(points=[self.x + self.width - 16, cy, self.x + self.width - 16, cy - 20], width=3.5)
-            Line(points=[cx, cy, cx, cy - 28], width=4.0)
+            # 6. Важкі батареї знарядь та головний калібр
+            Color(0.55, 0.62, 0.78, 1.0)
+            Line(points=[self.x + 16, cy + 10, self.x + 16, cy - 20], width=4.0)
+            Line(points=[self.x + self.width - 16, cy + 10, self.x + self.width - 16, cy - 20], width=4.0)
+            Line(points=[cx, cy + 12, cx, cy - 28], width=4.5)
 
-            # Ядро
-            phase_core = [(0.3, 0.7, 1.0, 0.95), (1.0, 0.75, 0.1, 0.95),
-                          (1.0, 0.25, 0.1, 0.95), (0.8, 0.1, 1.0, 0.95)]
-            Color(*phase_core[min(self.phase, 3)])
-            core_r = 14 + self.phase * 3
-            Ellipse(pos=(cx - core_r / 2, cy + self.height / 2 - core_r / 2),
-                    size=(core_r, core_r))
+            # 7. Плазмове ядро з магнітними кільцями стримування
+            phase_core = [
+                (0.3, 0.75, 1.0, 0.95),
+                (1.0, 0.75, 0.1, 0.95),
+                (1.0, 0.25, 0.1, 0.95),
+                (0.85, 0.15, 1.0, 0.95),
+            ]
+            core_col = phase_core[min(self.phase, 3)]
+            core_r = 18 + self.phase * 3
+            Color(*core_col)
+            Ellipse(pos=(cx - core_r / 2, cy + self.height / 2 - core_r / 2), size=(core_r, core_r))
+            Color(1.0, 1.0, 1.0, 0.9)
+            Ellipse(pos=(cx - core_r / 4, cy + self.height / 2 - core_r / 4), size=(core_r / 2, core_r / 2))
+            Color(core_col[0], core_col[1], core_col[2], 0.65)
+            Line(circle=(cx, cy + self.height / 2, core_r + 4), width=1.6)
 
-            # HP-смужка
-            bar_w = self.width + 30
-            bar_h = 7.0
-            bar_x = self.x - 15
-            bar_y = cy + self.height + 8
+            # 8. Тактичний бойовий індикатор міцності (HUD Boss Dreadnought Bar)
+            bar_w = self.width + 36
+            bar_h = 8.0
+            bar_x = cx - bar_w / 2
+            bar_y = cy + self.height + 10
 
-            Color(0.08, 0.10, 0.18, 0.9)
-            Rectangle(pos=(bar_x, bar_y), size=(bar_w, bar_h))
+            Color(0.04, 0.08, 0.15, 0.95)
+            RoundedRectangle(pos=(bar_x, bar_y), size=(bar_w, bar_h), radius=[3])
 
             ratio = max(0.0, self.hp / self.max_hp)
             if ratio > 0.5:
-                Color(0.2, 0.95, 0.35, 0.95)
+                Color(0.2, 0.95, 0.4, 0.95)
             elif ratio > 0.25:
-                Color(1.0, 0.7, 0.1, 0.95)
+                Color(1.0, 0.75, 0.1, 0.95)
             else:
                 Color(1.0, 0.2, 0.2, 0.95)
-            Rectangle(pos=(bar_x, bar_y), size=(bar_w * ratio, bar_h))
+            RoundedRectangle(pos=(bar_x, bar_y), size=(bar_w * ratio, bar_h), radius=[3])
 
-            # Фаза-текст над HP-смужкою
-            Color(1.0, 1.0, 1.0, 0.0)  # Прозора заглушка (текст через MDLabel)
+            Color(0.2, 0.8, 1.0, 0.85)
+            Line(rounded_rectangle=[bar_x, bar_y, bar_w, bar_h, 3], width=1.2)

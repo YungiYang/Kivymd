@@ -7,10 +7,12 @@ from kivymd.uix.label import MDLabel
 from kivy.graphics import (
     Color,
     Rectangle,
+    RoundedRectangle,
     Ellipse,
     Triangle,
     Line,
 )
+
 from game.constants import (
     PLAYER_WIDTH,
     PLAYER_HEIGHT,
@@ -168,18 +170,29 @@ class Bullet(Widget):
                 Line(points=[cx, cy - 7, cx + 4, cy, cx, cy + 7, cx - 4, cy, cx, cy - 7], width=1.5)
 
             else:
-                # Стандартний лазер
-                glow_color = (self.color[0], self.color[1], self.color[2], 0.35)
-                Color(*glow_color)
-                Rectangle(
-                    pos=(self.x - 2, self.y - 2),
-                    size=(self.width + 4, self.height + 4),
-                )
+                # Стандартний лазер з білим фотонним ядром та неоновим ореолом (AAA visual)
+                glow_w = self.width * 2.2
+                glow_h = self.height * 1.4
+                Color(self.color[0], self.color[1], self.color[2], 0.32)
+                Ellipse(pos=(cx - glow_w / 2.0, cy - glow_h / 2.0), size=(glow_w, glow_h))
+
                 Color(*self.color)
-                Rectangle(
+                RoundedRectangle(
                     pos=(self.x, self.y),
                     size=(self.width, self.height),
+                    radius=[self.width / 2.0],
                 )
+
+                # Білосніжне фотонне ядро
+                core_w = max(2.0, self.width * 0.45)
+                core_h = max(4.0, self.height * 0.7)
+                Color(1.0, 1.0, 1.0, 0.95)
+                RoundedRectangle(
+                    pos=(cx - core_w / 2.0, cy - core_h / 2.0),
+                    size=(core_w, core_h),
+                    radius=[core_w / 2.0],
+                )
+
 
 
 class LaserBeam(Widget):
@@ -341,6 +354,8 @@ class PlayerShip(Widget):
         self.speed = PLAYER_SPEED
         self.fire_cooldown = PLAYER_FIRE_COOLDOWN
         self.time_since_last_shot = self.fire_cooldown
+        self.time_alive = 0.0
+
 
         # Атрибути покращень (Upgrades)
         self.bullet_damage = BULLET_PLAYER_DAMAGE
@@ -465,6 +480,8 @@ class PlayerShip(Widget):
     def update(self, dt: float, screen_width: float):
         """Оновлює стан корабля: рух, кулдаун стрільби, статусні ефекти та часточки."""
         self.time_since_last_shot += dt
+        self.time_alive += dt
+
 
         # Оновлення статусних ефектів
         if self.is_burning:
@@ -840,11 +857,14 @@ class PlayerShip(Widget):
         return False
 
     def redraw(self):
-        """Малює індивідуальну модель корабля залежно від ship_id."""
+        """Малює високодеталізовану модель бойового апарату за стандартом AAA 2D."""
         self.canvas.clear()
         with self.canvas:
             cx = self.x + self.width / 2.0
             cy = self.y
+            w = self.width
+            h = self.height
+            t = self.time_alive
 
             # 1. Часточки полум'я двигунів
             for p in self.engine_particles:
@@ -855,132 +875,258 @@ class PlayerShip(Widget):
                     size=(p.size, p.size),
                 )
 
-            # 2. Корпус корабля за класами
-            if self.ship_id == "beam_titan":
-                # Фотонний крейсер «Геліос»
-                Color(*self.secondary_color)
-                Rectangle(
-                    pos=(self.x + 4.0, cy + 6.0),
-                    size=(self.width - 8.0, self.height - 18.0),
-                )
-                Color(*self.primary_color)
+            # 2. Динамічні реактивні факели сопел (векторний плазмовий струмінь з ядром)
+            flame_osc = 0.82 + 0.28 * math.sin(t * 26.0)
+            flame_len = 16.0 * flame_osc
+
+            # Ліве та праве сопло
+            for noz_x in [cx - w * 0.22, cx + w * 0.22]:
+                # Зовнішнє плазмове сяйво
+                Color(self.accent_color[0], self.accent_color[1], self.accent_color[2], 0.35)
                 Triangle(
                     points=[
-                        self.x + 2.0, cy + 12.0,
-                        cx, cy + self.height,
-                        self.x + self.width - 2.0, cy + 12.0,
+                        noz_x - 7.0, cy + 4.0,
+                        noz_x, cy - flame_len * 1.25,
+                        noz_x + 7.0, cy + 4.0,
                     ]
                 )
-                # Квантова фокусуюча лінза
+                # Головний реактивний струмінь
+                Color(self.accent_color[0], self.accent_color[1], self.accent_color[2], 0.9)
+                Triangle(
+                    points=[
+                        noz_x - 4.5, cy + 3.0,
+                        noz_x, cy - flame_len,
+                        noz_x + 4.5, cy + 3.0,
+                    ]
+                )
+                # Білосніжне високотемпературне ядро (Mach Diamond)
+                Color(1.0, 1.0, 0.9, 0.98)
+                Triangle(
+                    points=[
+                        noz_x - 2.2, cy + 2.0,
+                        noz_x, cy - flame_len * 0.55,
+                        noz_x + 2.2, cy + 2.0,
+                    ]
+                )
+                # Металеве титанове сопло
+                Color(0.12, 0.16, 0.24, 1.0)
+                Rectangle(pos=(noz_x - 5.0, cy + 1.0), size=(10.0, 5.0))
+                Color(0.35, 0.45, 0.6, 0.9)
+                Line(rectangle=[noz_x - 5.0, cy + 1.0, 10.0, 5.0], width=1.0)
+
+            # 3. Навігаційні стробоскопи на крилах (AAA Avionics)
+            strobe_phase = math.sin(t * 7.5)
+            strobe_on = strobe_phase > 0.0
+            # Лівий червоний ліхтар
+            Color(1.0, 0.15, 0.15, 0.95 if strobe_on else 0.25)
+            Ellipse(pos=(self.x + 1.0, cy + 10.0), size=(4.0, 4.0))
+            if strobe_on:
+                Color(1.0, 0.2, 0.2, 0.4)
+                Ellipse(pos=(self.x - 1.0, cy + 8.0), size=(8.0, 8.0))
+
+            # Правий зелений ліхтар
+            Color(0.15, 1.0, 0.35, 0.95 if strobe_on else 0.25)
+            Ellipse(pos=(self.x + w - 5.0, cy + 10.0), size=(4.0, 4.0))
+            if strobe_on:
+                Color(0.2, 1.0, 0.4, 0.4)
+                Ellipse(pos=(self.x + w - 7.0, cy + 8.0), size=(8.0, 8.0))
+
+            # 4. Високополігональна геометрія корабля за моделями
+            if self.ship_id == "beam_titan":
+                # ── КВАНТОВИЙ КРЕЙСЕР «ГЕЛІОС» ──
+                # Важкі броньовані крила
+                Color(*self.secondary_color)
+                Triangle(points=[self.x, cy + 4.0, cx, cy + h * 0.7, cx - w * 0.15, cy + 2.0])
+                Triangle(points=[self.x + w, cy + 4.0, cx, cy + h * 0.7, cx + w * 0.15, cy + 2.0])
+                # Центральна броньована надбудова
+                Color(*self.primary_color)
+                Rectangle(pos=(cx - w * 0.28, cy + 4.0), size=(w * 0.56, h * 0.72))
+                # Подвійні магнітні рейки квантового випромінювача
+                Color(0.18, 0.24, 0.35, 1.0)
+                Rectangle(pos=(cx - w * 0.26, cy + h * 0.5), size=(w * 0.15, h * 0.48))
+                Rectangle(pos=(cx + w * 0.11, cy + h * 0.5), size=(w * 0.15, h * 0.48))
+                # Котушки прискорювача
                 Color(*self.accent_color)
-                Ellipse(pos=(cx - 8.0, cy + self.height - 14.0), size=(16.0, 16.0))
-                Color(1.0, 1.0, 1.0, 0.95)
-                Ellipse(pos=(cx - 4.0, cy + self.height - 10.0), size=(8.0, 8.0))
+                Line(points=[cx - w * 0.26, cy + h * 0.7, cx - w * 0.11, cy + h * 0.7], width=1.5)
+                Line(points=[cx + w * 0.11, cy + h * 0.7, cx + w * 0.26, cy + h * 0.7], width=1.5)
+                # Обертова квантова призма фокусування
+                prism_pulse = 1.0 + 0.12 * math.sin(t * 14.0)
+                pr_r = 14.0 * prism_pulse
+                Color(self.accent_color[0], self.accent_color[1], self.accent_color[2], 0.35)
+                Ellipse(pos=(cx - pr_r / 2.0, cy + h * 0.78 - pr_r / 2.0), size=(pr_r, pr_r))
+                Color(self.accent_color[0], self.accent_color[1], self.accent_color[2], 0.95)
+                Ellipse(pos=(cx - 5.0, cy + h * 0.78 - 5.0), size=(10.0, 10.0))
+                Color(1.0, 1.0, 1.0, 0.98)
+                Ellipse(pos=(cx - 2.5, cy + h * 0.78 - 2.5), size=(5.0, 5.0))
+                # Фаски та броньовані лінії
+                Color(0.2, 0.85, 0.95, 0.7)
+                Line(rectangle=[cx - w * 0.28, cy + 4.0, w * 0.56, h * 0.72], width=1.2)
 
             elif self.ship_id == "plasma_vanguard":
-                # Дредноут «Вулкан»
+                # ── СТОЙКИЙ ДРЕДНОУТ «ВУЛКАН» ──
+                # Масивне фронтальне клиноподібне бронювання
                 Color(*self.secondary_color)
-                Rectangle(
-                    pos=(self.x + 2.0, cy + 6.0),
-                    size=(self.width - 4.0, self.height - 18.0),
-                )
+                Rectangle(pos=(cx - w * 0.44, cy + 4.0), size=(w * 0.88, h * 0.52))
+                Triangle(points=[cx - w * 0.48, cy + 8.0, cx, cy + h * 0.72, cx + w * 0.48, cy + 8.0])
                 Color(*self.primary_color)
-                Triangle(
-                    points=[
-                        self.x + 6.0, cy + 8.0,
-                        cx, cy + self.height - 4.0,
-                        self.x + self.width - 6.0, cy + 8.0,
-                    ]
-                )
-                # Пульсуючий плазмовий заряд на носі (росте під час заряджання!)
-                core_size = 8.0 + 14.0 * self.charge_progress
-                Color(1.0, 0.45, 0.1, 0.85)
-                Ellipse(
-                    pos=(cx - core_size / 2.0, cy + self.height - core_size + 2.0),
-                    size=(core_size, core_size),
-                )
-                Color(1.0, 0.9, 0.25, 1.0)
-                Ellipse(
-                    pos=(cx - core_size * 0.25, cy + self.height - core_size * 0.75),
-                    size=(core_size * 0.5, core_size * 0.5),
-                )
+                Triangle(points=[cx - w * 0.32, cy + 6.0, cx, cy + h * 0.86, cx + w * 0.32, cy + 6.0])
+                # Термостійкі пластини та радіаторні вентиляційні решітки
+                Color(1.0, 0.35, 0.05, 0.75)
+                Line(points=[cx - w * 0.25, cy + 14.0, cx - w * 0.25, cy + h * 0.45], width=2.0)
+                Line(points=[cx + w * 0.25, cy + 14.0, cx + w * 0.25, cy + h * 0.45], width=2.0)
+                # Плазмовий реактор на носі (пульсує та зростає при накопиченні заряду)
+                core_size = 9.0 + 16.0 * self.charge_progress + 2.0 * math.sin(t * 18.0)
+                Color(1.0, 0.35, 0.05, 0.45)
+                Ellipse(pos=(cx - core_size * 0.75, cy + h * 0.72 - core_size * 0.75), size=(core_size * 1.5, core_size * 1.5))
+                Color(1.0, 0.65, 0.1, 0.95)
+                Ellipse(pos=(cx - core_size * 0.5, cy + h * 0.72 - core_size * 0.5), size=(core_size, core_size))
+                Color(1.0, 0.95, 0.3, 1.0)
+                Ellipse(pos=(cx - core_size * 0.25, cy + h * 0.72 - core_size * 0.25), size=(core_size * 0.5, core_size * 0.5))
 
             elif self.ship_id == "storm_valkyrie":
-                # Перехоплювач «Валькірія»
+                # ── СТРІЛОПОДІБНИЙ ПЕРЕХОПЛЮВАЧ «ВАЛЬКІРІЯ» ──
+                # Витончені аеродинамічні стріловидні крила
                 Color(*self.secondary_color)
-                Triangle(
-                    points=[
-                        self.x, cy + 14.0,
-                        cx, cy + self.height,
-                        self.x + self.width, cy + 14.0,
-                    ]
-                )
+                Triangle(points=[self.x, cy + 10.0, cx, cy + h * 0.98, cx, cy + 6.0])
+                Triangle(points=[self.x + w, cy + 10.0, cx, cy + h * 0.98, cx, cy + 6.0])
                 Color(*self.primary_color)
-                Triangle(
-                    points=[
-                        self.x + 8.0, cy + 8.0,
-                        cx, cy + self.height - 2.0,
-                        self.x + self.width - 8.0, cy + 8.0,
-                    ]
-                )
-                # Неонові стабілізатори
+                Triangle(points=[self.x + 6.0, cy + 8.0, cx, cy + h, cx + w - 6.0, cy + 8.0])
+                # Псіонічні світловоди вздовж кромок крила
                 Color(*self.accent_color)
-                Line(points=[self.x + 2.0, cy + 8.0, cx, cy + self.height * 0.6], width=1.5)
-                Line(points=[self.x + self.width - 2.0, cy + 8.0, cx, cy + self.height * 0.6], width=1.5)
-                # Кабіна
-                Color(0.2, 0.95, 1.0, 0.95)
-                Ellipse(pos=(cx - 4.0, cy + self.height * 0.4), size=(8.0, 14.0))
+                Line(points=[self.x + 4.0, cy + 12.0, cx, cy + h * 0.75], width=1.5)
+                Line(points=[self.x + w - 4.0, cy + 12.0, cx, cy + h * 0.75], width=1.5)
+                # Кабіна з кришталевим відблиском
+                Color(0.2, 0.92, 1.0, 0.95)
+                Ellipse(pos=(cx - 4.5, cy + h * 0.42), size=(9.0, 18.0))
+                Color(1.0, 1.0, 1.0, 0.85)
+                Line(points=[cx - 2.0, cy + h * 0.52, cx + 1.0, cy + h * 0.62], width=1.2)
+
+            elif self.ship_id == "nova_hunter":
+                # ── СТЕЛС-МИСЛИВЕЦЬ «НОВА» ──
+                # Гранований стелс-корпус
+                Color(*self.secondary_color)
+                Triangle(points=[self.x + 2.0, cy + 6.0, cx, cy + h * 0.95, self.x + w - 2.0, cy + 6.0])
+                Color(*self.primary_color)
+                Triangle(points=[self.x + 9.0, cy + 10.0, cx, cy + h * 0.88, self.x + w - 9.0, cy + 10.0])
+                # Ракетні шахти на пілонах крил
+                Color(0.2, 0.22, 0.28, 1.0)
+                Rectangle(pos=(self.x + 7.0, cy + 14.0), size=(6.0, 16.0))
+                Rectangle(pos=(self.x + w - 13.0, cy + 14.0), size=(6.0, 16.0))
+                # Боєголовки ракет
+                Color(1.0, 0.3, 0.1, 1.0)
+                Ellipse(pos=(self.x + 7.5, cy + 27.0), size=(5.0, 6.0))
+                Ellipse(pos=(self.x + w - 12.5, cy + 27.0), size=(5.0, 6.0))
+                # Червоний сенсорний візор цілевказівника
+                Color(1.0, 0.15, 0.2, 0.95)
+                Ellipse(pos=(cx - 3.5, cy + h * 0.55), size=(7.0, 10.0))
+
+            elif self.ship_id == "phantom_shade":
+                # ── ФАНТОМНИЙ КОРВЕТ «ТІНЬ» ──
+                # Алмазний темний фазований силует
+                Color(*self.secondary_color)
+                Triangle(points=[self.x + 4.0, cy + 14.0, cx, cy + h * 0.98, self.x + w - 4.0, cy + 14.0])
+                Triangle(points=[self.x + 4.0, cy + 14.0, cx, cy + 2.0, self.x + w - 4.0, cy + 14.0])
+                Color(*self.primary_color)
+                Triangle(points=[self.x + 10.0, cy + 14.0, cx, cy + h * 0.9, self.x + w - 10.0, cy + 14.0])
+                # Фазовані квантові лінії
+                Color(*self.accent_color)
+                Line(points=[self.x + 6.0, cy + 14.0, cx, cy + h * 0.6, self.x + w - 6.0, cy + 14.0], width=1.5)
+                # Квантове серце
+                Color(0.85, 0.45, 1.0, 0.95)
+                Ellipse(pos=(cx - 4.0, cy + h * 0.45), size=(8.0, 12.0))
 
             else:
-                # Базовий штурмовик «Фенікс»
+                # ── АПЕКС-ШТУРМОВИК «ФЕНІКС» (Базовий флагман) ──
+                # 1. Шасі та крила з подвійною стріловидністю
                 Color(*self.secondary_color)
                 Triangle(
                     points=[
-                        self.x, cy + 10.0,
-                        cx, cy + self.height - 12.0,
-                        self.x + self.width, cy + 10.0,
+                        self.x, cy + 6.0,
+                        cx, cy + h * 0.78,
+                        self.x + w, cy + 6.0,
                     ]
                 )
+                # 2. Основні броньовані площини крил
                 Color(*self.primary_color)
                 Triangle(
                     points=[
-                        self.x + 8.0, cy + 14.0,
-                        cx, cy + self.height,
-                        self.x + self.width - 8.0, cy + 14.0,
+                        self.x + 6.0, cy + 10.0,
+                        cx, cy + h * 0.96,
+                        self.x + w - 6.0, cy + 10.0,
                     ]
                 )
+                # 3. Бортові лазерні гармати
+                Color(0.25, 0.32, 0.45, 1.0)
+                Rectangle(pos=(self.x + 7.0, cy + 18.0), size=(3.5, 18.0))
+                Rectangle(pos=(self.x + w - 10.5, cy + 18.0), size=(3.5, 18.0))
                 Color(*self.accent_color)
-                Ellipse(pos=(cx - 4.5, cy + self.height / 2.0), size=(9.0, 14.0))
-                Color(0.8, 0.8, 0.8, 1.0)
-                Rectangle(pos=(cx - 5.0, cy + 2.0), size=(10.0, 6.0))
+                Ellipse(pos=(self.x + 6.5, cy + 34.0), size=(4.5, 5.0))
+                Ellipse(pos=(self.x + w - 11.0, cy + 34.0), size=(4.5, 5.0))
 
-            # 3. Енергетичний силовий щит (якщо є активні заряди)
-            if self.shield > 0:
-                shield_radius = self.width * 0.72
-                Color(0.2, 0.85, 1.0, 0.5)
-                Line(circle=(cx, cy + self.height / 2.0, shield_radius), width=2.0)
-                Color(0.2, 0.85, 1.0, 0.12)
-                Ellipse(
-                    pos=(cx - shield_radius, cy + self.height / 2.0 - shield_radius),
-                    size=(shield_radius * 2.0, shield_radius * 2.0),
+                # 4. Центральний фюзеляжний кіль
+                Color(self.primary_color[0] * 1.2, self.primary_color[1] * 1.2, self.primary_color[2] * 1.2, 1.0)
+                Triangle(
+                    points=[
+                        cx - 7.0, cy + 6.0,
+                        cx, cy + h,
+                        cx + 7.0, cy + 6.0,
+                    ]
                 )
 
-            # 4. Ефекти статусів (підпал, заморозка, сповільнення)
+                # 5. Кабіна пілота з кришталевим склом та бліком
+                Color(0.12, 0.88, 1.0, 0.95)
+                Ellipse(pos=(cx - 4.5, cy + h * 0.44), size=(9.0, 16.0))
+                Color(1.0, 1.0, 1.0, 0.85)
+                Line(points=[cx - 2.0, cy + h * 0.52, cx + 1.5, cy + h * 0.62], width=1.4)
+
+                # 6. Неонові тактичні лінії з'єднань
+                Color(*self.accent_color)
+                Line(points=[self.x + 8.0, cy + 12.0, cx, cy + h * 0.65], width=1.2)
+                Line(points=[self.x + w - 8.0, cy + 12.0, cx, cy + h * 0.65], width=1.2)
+
+            # 5. Кінетичний силовий щит (AAA Forcefield System)
+            if self.shield > 0:
+                shield_pulse = 1.0 + 0.06 * math.sin(t * 8.0)
+                shield_r = (w * 0.74) * shield_pulse
+                # Зовнішнє енергетичне купольне сяйво
+                Color(0.15, 0.88, 1.0, 0.12 + 0.05 * math.sin(t * 10.0))
+                Ellipse(
+                    pos=(cx - shield_r, cy + h * 0.48 - shield_r),
+                    size=(shield_r * 2.0, shield_r * 2.0),
+                )
+                # Головний силовий контур
+                Color(0.2, 0.92, 1.0, 0.65 + 0.2 * math.sin(t * 12.0))
+                Line(circle=(cx, cy + h * 0.48, shield_r), width=1.8)
+                # Внутрішній фазований контур
+                Color(0.4, 0.98, 1.0, 0.35)
+                Line(circle=(cx, cy + h * 0.48, shield_r * 0.92), width=1.0)
+                # Орбітальні дефлекторні вузли енергії (обертаються навколо корабля!)
+                for orb_i in range(3):
+                    angle = t * 3.2 + orb_i * (2.0 * math.pi / 3.0)
+                    ox = cx + shield_r * math.cos(angle)
+                    oy = (cy + h * 0.48) + shield_r * math.sin(angle)
+                    Color(1.0, 1.0, 1.0, 0.95)
+                    Ellipse(pos=(ox - 2.5, oy - 2.5), size=(5.0, 5.0))
+                    Color(0.15, 0.9, 1.0, 0.5)
+                    Ellipse(pos=(ox - 4.5, oy - 4.5), size=(9.0, 9.0))
+
+            # 6. Ефекти аномальних статусів
             if self.is_burning:
                 for bp in self.burn_particles:
                     alpha = bp.color[3] * (1.0 - bp.life / bp.max_life)
                     Color(bp.color[0], bp.color[1], bp.color[2], alpha)
                     Ellipse(pos=(bp.x - bp.size / 2.0, bp.y - bp.size / 2.0), size=(bp.size, bp.size))
-                Color(1.0, 0.35, 0.05, 0.35)
-                Line(rounded_rectangle=[self.x - 4, cy - 4, self.width + 8, self.height + 8, 8], width=2.0)
+                Color(1.0, 0.35, 0.05, 0.4)
+                Line(rounded_rectangle=[self.x - 4, cy - 4, w + 8, h + 8, 8], width=2.0)
 
             if self.is_frozen:
-                Color(0.4, 0.9, 1.0, 0.40)
-                Line(rounded_rectangle=[self.x - 3, cy - 3, self.width + 6, self.height + 6, 6], width=2.0)
+                Color(0.4, 0.9, 1.0, 0.45)
+                Line(rounded_rectangle=[self.x - 3, cy - 3, w + 6, h + 6, 6], width=2.0)
 
             if self.is_slowed:
-                Color(0.1, 0.85, 0.95, 0.30)
-                Line(rounded_rectangle=[self.x - 2, cy - 2, self.width + 4, self.height + 4, 4], width=1.5)
+                Color(0.1, 0.85, 0.95, 0.35)
+                Line(rounded_rectangle=[self.x - 2, cy - 2, w + 4, h + 4, 4], width=1.5)
+
 
 
 class FloatingText(Widget):
@@ -1222,124 +1368,120 @@ class Enemy(Widget):
         return self.y < -self.height - 20
 
     def redraw(self):
-        """Малює ворожий корабель відповідно до його класу."""
+        """Малює ворожий бойовий корабель відповідно до його класу за стандартом AAA 2D."""
         self.canvas.clear()
         with self.canvas:
             cx = self.x + self.width / 2.0
+            cy = self.y
+            w = self.width
+            h = self.height
+            t = self.time_alive
+
+            # Зворотний реактивний факел ворога (спрямований вгору)
+            ef_len = 10.0 * (0.8 + 0.3 * math.sin(t * 22.0))
+            Color(1.0, 0.45, 0.1, 0.5)
+            Triangle(points=[cx - 5.0, cy + h - 2.0, cx, cy + h + ef_len, cx + 5.0, cy + h - 2.0])
+            Color(1.0, 0.9, 0.3, 0.95)
+            Triangle(points=[cx - 2.5, cy + h - 2.0, cx, cy + h + ef_len * 0.6, cx + 2.5, cy + h - 2.0])
 
             if self.enemy_type == "scout":
-                # Швидкий розвідник (золотаво-помаранчевий)
-                Color(1.0, 0.45, 0.1, 1.0)
-                Triangle(
-                    points=[
-                        self.x, self.y + self.height - 4,
-                        cx, self.y,
-                        self.x + self.width, self.y + self.height - 4,
-                    ]
-                )
-                Color(1.0, 0.85, 0.2, 1.0)
-                Triangle(
-                    points=[
-                        self.x + 6, self.y + self.height,
-                        cx, self.y + 6,
-                        self.x + self.width - 6, self.y + self.height,
-                    ]
-                )
+                # ── СКОРОСТНИЙ СТЕЛС-РОЗВІДНИК ──
+                # Гострий клиноподібний корпус кольору темно-вугільного титану
+                Color(0.18, 0.12, 0.22, 1.0)
+                Triangle(points=[self.x, cy + h - 2.0, cx, cy, self.x + w, cy + h - 2.0])
+                # Золотаво-бурштинові броньовані накладки
+                Color(1.0, 0.55, 0.12, 1.0)
+                Triangle(points=[self.x + 5.0, cy + h - 4.0, cx, cy + 5.0, self.x + w - 5.0, cy + h - 4.0])
+                Color(1.0, 0.85, 0.25, 1.0)
+                Triangle(points=[cx - 4.0, cy + h - 4.0, cx, cy + 2.0, cx + 4.0, cy + h - 4.0])
+                # Сяючий бірюзовий сенсор розвідки
                 Color(0.2, 0.95, 1.0, 0.95)
-                Ellipse(pos=(cx - 3.0, self.y + 12.0), size=(6.0, 6.0))
+                Ellipse(pos=(cx - 3.5, cy + h * 0.45), size=(7.0, 7.0))
+                Color(1.0, 1.0, 1.0, 0.9)
+                Ellipse(pos=(cx - 1.5, cy + h * 0.45 + 1.5), size=(3.0, 3.0))
 
             elif self.enemy_type == "sniper":
-                # Снайпер (видовжений бірюзово-фіолетовий корпус з лазерним прицілом)
-                Color(0.2, 0.75, 0.85, 1.0)
-                Triangle(
-                    points=[
-                        self.x + 4, self.y + self.height,
-                        cx, self.y,
-                        self.x + self.width - 4, self.y + self.height,
-                    ]
-                )
-                Color(0.65, 0.15, 0.85, 1.0)
-                Rectangle(pos=(cx - 4.0, self.y + 10.0), size=(8.0, self.height - 14.0))
-                Color(1.0, 0.1, 0.3, 1.0)
-                Ellipse(pos=(cx - 3.5, self.y + 6.0), size=(7.0, 7.0))
+                # ── РЕЙКОВИЙ СНАЙПЕР ДАЛЕКОГО БОЮ ──
+                # Видовжений стріловидний корпус
+                Color(0.12, 0.18, 0.28, 1.0)
+                Triangle(points=[self.x + 3.0, cy + h - 2.0, cx, cy, self.x + w - 3.0, cy + h - 2.0])
+                # Довгий квантовий рейковий ствол
+                Color(0.25, 0.85, 0.95, 1.0)
+                Rectangle(pos=(cx - 2.5, cy), size=(5.0, h * 0.75))
+                # Магнітні конденсаторні кільця прискорювача
+                Color(0.85, 0.25, 1.0, 0.9)
+                Rectangle(pos=(cx - 5.0, cy + h * 0.25), size=(10.0, 3.5))
+                Rectangle(pos=(cx - 5.0, cy + h * 0.48), size=(10.0, 3.5))
+                # Лазерне око прицілювання
+                Color(1.0, 0.1, 0.35, 1.0)
+                Ellipse(pos=(cx - 3.0, cy + 4.0), size=(6.0, 6.0))
 
             elif self.enemy_type == "bomber":
-                # Бомбардувальник (широкі помаранчеві крила)
-                Color(1.0, 0.45, 0.15, 1.0)
-                Triangle(
-                    points=[
-                        self.x, self.y + self.height - 6,
-                        cx, self.y + 6,
-                        self.x + self.width, self.y + self.height - 6,
-                    ]
-                )
-                Color(0.9, 0.75, 0.1, 1.0)
-                Rectangle(pos=(self.x + 10, self.y + 12), size=(self.width - 20, 16))
-                Color(1.0, 0.1, 0.1, 1.0)
-                Ellipse(pos=(cx - 5.0, self.y + 14.0), size=(10.0, 10.0))
+                # ── ВАЖКИЙ СТЕЛС-БОМБАРДУВАЛЬНИК ──
+                # Широке трикутне літаюче крило
+                Color(0.22, 0.12, 0.10, 1.0)
+                Triangle(points=[self.x, cy + h - 4.0, cx, cy + 4.0, self.x + w, cy + h - 4.0])
+                Color(0.95, 0.42, 0.12, 1.0)
+                Triangle(points=[self.x + 7.0, cy + h - 6.0, cx, cy + 8.0, self.x + w - 7.0, cy + h - 6.0])
+                # Броньований відсік плазмових торпед
+                Color(0.14, 0.16, 0.22, 1.0)
+                Rectangle(pos=(cx - w * 0.22, cy + 14.0), size=(w * 0.44, 18.0))
+                # Сяюче ядро торпедного люка
+                Color(1.0, 0.2, 0.1, 0.95)
+                Ellipse(pos=(cx - 5.5, cy + 17.0), size=(11.0, 11.0))
+                Color(1.0, 0.9, 0.2, 1.0)
+                Ellipse(pos=(cx - 2.5, cy + 20.0), size=(5.0, 5.0))
 
             elif self.enemy_type == "cruiser":
-                # Важкий броньований крейсер (темно-фіолетовий з червоними гарматами)
+                # ── БРОНЬОВАНИЙ ШТУРМОВИЙ КРЕЙСЕР ──
+                # Важкий корпус з темно-титановою бронею
+                Color(0.28, 0.08, 0.22, 1.0)
+                Rectangle(pos=(self.x + 4.0, cy + 12.0), size=(w - 8.0, h - 18.0))
+                Triangle(points=[self.x + 2.0, cy + h - 6.0, cx, cy + 2.0, self.x + w - 2.0, cy + h - 6.0])
+                # Бортові плазмові гарматні спонсони
                 Color(0.9, 0.2, 0.35, 1.0)
-                Triangle(
-                    points=[
-                        self.x, self.y + self.height - 10,
-                        cx, self.y + 2,
-                        self.x + self.width, self.y + self.height - 10,
-                    ]
-                )
-                Color(0.45, 0.15, 0.65, 1.0)
-                Rectangle(
-                    pos=(self.x + 12, self.y + 8),
-                    size=(self.width - 24, self.height - 14),
-                )
-                Color(1.0, 0.15, 0.15, 1.0)
-                Ellipse(pos=(cx - 6.0, self.y + 16.0), size=(12.0, 12.0))
-                Color(1.0, 0.8, 0.2, 1.0)
-                Ellipse(pos=(cx - 3.0, self.y + 19.0), size=(6.0, 6.0))
+                Rectangle(pos=(self.x + 5.0, cy + 4.0), size=(7.0, 20.0))
+                Rectangle(pos=(self.x + w - 12.0, cy + 4.0), size=(7.0, 20.0))
+                # Командний місток з червоним панорамним візором
+                Color(1.0, 0.18, 0.25, 0.95)
+                Ellipse(pos=(cx - 7.0, cy + 18.0), size=(14.0, 10.0))
+                Color(1.0, 0.85, 0.3, 1.0)
+                Line(points=[cx - 5.0, cy + 23.0, cx + 5.0, cy + 23.0], width=1.5)
 
             else:
-                # Стандартний винищувач (червоно-помаранчевий)
-                Color(*COLOR_ENEMY_SECONDARY)
-                Triangle(
-                    points=[
-                        self.x, self.y + self.height - 8,
-                        cx, self.y + 4,
-                        self.x + self.width, self.y + self.height - 8,
-                    ]
-                )
+                # ── СЕРІЙНИЙ ВИНИЩУВАЧ «ХИЖАК» ──
+                Color(0.25, 0.10, 0.12, 1.0)
+                Triangle(points=[self.x, cy + h - 4.0, cx, cy + 2.0, self.x + w, cy + h - 4.0])
                 Color(*COLOR_ENEMY_PRIMARY)
-                Triangle(
-                    points=[
-                        self.x + 8, self.y + self.height - 12,
-                        cx, self.y,
-                        self.x + self.width - 8, self.y + self.height - 12,
-                    ]
-                )
-                Color(1.0, 1.0, 0.2, 0.9)
-                Ellipse(
-                    pos=(cx - 4.0, self.y + self.height / 2.0 - 4.0),
-                    size=(8.0, 8.0),
-                )
+                Triangle(points=[self.x + 6.0, cy + h - 8.0, cx, cy + 4.0, self.x + w - 6.0, cy + h - 8.0])
+                # Зловісне червоне моно-око сенсора
+                Color(1.0, 0.15, 0.25, 0.95)
+                Ellipse(pos=(cx - 4.5, cy + h * 0.4), size=(9.0, 9.0))
+                Color(1.0, 0.9, 0.3, 1.0)
+                Ellipse(pos=(cx - 2.0, cy + h * 0.4 + 2.0), size=(4.0, 4.0))
 
-            # Міні смужка HP над ворогом (якщо пошкоджений або для важких кораблів)
+            # Високотехнологічна тактична смужка HP (HUD bracket)
             if self.hp < self.max_hp or self.enemy_type in ("cruiser", "bomber"):
-                bar_w = self.width
+                bar_w = w
                 bar_h = 4.0
                 bar_x = self.x
-                bar_y = self.y + self.height + 4.0
+                bar_y = cy + h + 6.0
 
-                Color(0.12, 0.16, 0.25, 0.85)
+                # Підкладка з рамкою
+                Color(0.06, 0.08, 0.14, 0.9)
                 Rectangle(pos=(bar_x, bar_y), size=(bar_w, bar_h))
+                Color(0.2, 0.3, 0.45, 0.8)
+                Line(rectangle=[bar_x, bar_y, bar_w, bar_h], width=1.0)
 
                 ratio = max(0.0, min(1.0, self.hp / self.max_hp))
                 if ratio > 0.5:
-                    Color(0.2, 0.95, 0.35, 0.95)
+                    Color(0.15, 0.95, 0.4, 0.95)
                 elif ratio > 0.25:
                     Color(1.0, 0.85, 0.2, 0.95)
                 else:
-                    Color(1.0, 0.25, 0.25, 0.95)
-                Rectangle(pos=(bar_x, bar_y), size=(bar_w * ratio, bar_h))
+                    Color(1.0, 0.22, 0.25, 0.95)
+                Rectangle(pos=(bar_x + 0.5, bar_y + 0.5), size=(max(0.0, (bar_w - 1.0) * ratio), bar_h - 1.0))
+
 
 
 class Boss(Widget):
@@ -1364,16 +1506,16 @@ class Boss(Widget):
         self.entered = False
 
         # Масштабування характеристик відповідно до рівня боса
-        self.max_hp = 300 + (boss_level - 1) * 200
+        self.max_hp = 2500 + (boss_level - 1) * 1500
         self.hp = self.max_hp
-        self.speed = 75.0 + min(65.0, boss_level * 15.0)
-        self.score_value = 1200 + boss_level * 600
+        self.speed = 80.0 + min(90.0, boss_level * 18.0)
+        self.score_value = 2000 + boss_level * 1000
         self.move_dir = 1
         self.time_alive = 0.0
 
         # Атакуючі патерни (чергування 3 режимів)
         self.attack_mode = 0
-        self.fire_cooldown = max(0.85, 1.85 - boss_level * 0.14)
+        self.fire_cooldown = max(0.55, 1.40 - boss_level * 0.10)
         self.time_since_last_shot = 0.0
 
         # Система часточок двигунів боса
@@ -1564,10 +1706,14 @@ class Boss(Widget):
         self.hp = max(0, self.hp - amount)
 
     def redraw(self):
+        """Малює гігантський ворожий флагман-дредноут (AAA Capital Dreadnought)."""
         self.canvas.clear()
         with self.canvas:
             cx = self.x + self.width / 2.0
             cy = self.y
+            w = self.width
+            h = self.height
+            t = self.time_alive
 
             # Часточки полум'я важких двигунів
             for p in self.engine_particles:
@@ -1575,37 +1721,82 @@ class Boss(Widget):
                 Color(p.color[0], p.color[1], p.color[2], alpha)
                 Ellipse(pos=(p.x - p.size / 2, p.y - p.size / 2), size=(p.size, p.size))
 
-            # 1. Важка броньована основа (крила та фюзеляж)
-            Color(0.25, 0.08, 0.32, 1.0)
+            # 4 важкі реактивні сопла боса зверху
+            for noz_x in [self.x + 18.0, self.x + 36.0, self.x + w - 36.0, self.x + w - 18.0]:
+                Color(1.0, 0.4, 0.1, 0.45)
+                Triangle(points=[noz_x - 6.0, cy + h - 2.0, noz_x, cy + h + 18.0, noz_x + 6.0, cy + h - 2.0])
+                Color(1.0, 0.9, 0.3, 0.95)
+                Triangle(points=[noz_x - 3.0, cy + h - 2.0, noz_x, cy + h + 10.0, noz_x + 3.0, cy + h - 2.0])
+                Color(0.14, 0.16, 0.24, 1.0)
+                Rectangle(pos=(noz_x - 6.0, cy + h - 6.0), size=(12.0, 6.0))
+
+            # 1. Важка броньована основа (крила та фюзеляж з титановим скосом)
+            Color(0.18, 0.06, 0.24, 1.0)
             Triangle(
                 points=[
-                    self.x, cy + self.height - 10,
-                    cx, cy + 4,
-                    self.x + self.width, cy + self.height - 10,
+                    self.x, cy + h - 8.0,
+                    cx, cy + 2.0,
+                    self.x + w, cy + h - 8.0,
+                ]
+            )
+            # Вторинне броньоване оперення
+            Color(0.38, 0.10, 0.32, 1.0)
+            Triangle(
+                points=[
+                    self.x + 8.0, cy + h - 12.0,
+                    cx, cy + 6.0,
+                    self.x + w - 8.0, cy + h - 12.0,
                 ]
             )
 
-            # 2. Основна надбудова корпусу
-            Color(0.55, 0.12, 0.45, 1.0)
+            # 2. Основна надбудова корпусу з лініями стику бронеплит
+            Color(0.55, 0.14, 0.42, 1.0)
             Rectangle(
-                pos=(self.x + 18, cy + 18),
-                size=(self.width - 36, self.height - 30),
+                pos=(self.x + 16.0, cy + 16.0),
+                size=(w - 32.0, h - 28.0),
             )
+            Color(0.85, 0.25, 0.65, 0.8)
+            Line(rectangle=[self.x + 16.0, cy + 16.0, w - 32.0, h - 28.0], width=1.5)
 
-            # 3. Бортові гарматні батареї
-            Color(0.85, 0.15, 0.25, 1.0)
-            Rectangle(pos=(self.x + 8, cy + 8), size=(10, 24))
-            Rectangle(pos=(self.x + self.width - 18, cy + 8), size=(10, 24))
+            # 3. Бортові важкі спарені гарматні батареї
+            Color(0.85, 0.18, 0.24, 1.0)
+            Rectangle(pos=(self.x + 6.0, cy + 6.0), size=(12.0, 26.0))
+            Rectangle(pos=(self.x + w - 18.0, cy + 6.0), size=(12.0, 26.0))
+            Color(1.0, 0.8, 0.2, 1.0)
+            Ellipse(pos=(self.x + 9.5, cy + 6.0), size=(5.0, 5.0))
+            Ellipse(pos=(self.x + w - 14.5, cy + 6.0), size=(5.0, 5.0))
 
-            # 4. Командний місток і термоядерний реактор (пульсуюче ядро)
-            Color(1.0, 0.2, 0.2, 0.95)
-            Ellipse(pos=(cx - 10.0, cy + 28.0), size=(20.0, 20.0))
-            Color(1.0, 0.9, 0.2, 1.0)
-            Ellipse(pos=(cx - 5.0, cy + 33.0), size=(10.0, 10.0))
+            # 4. Командний місток флагмана
+            Color(0.12, 0.16, 0.24, 1.0)
+            Rectangle(pos=(cx - 16.0, cy + h * 0.58), size=(32.0, 14.0))
+            # Зловісний панорамний візор містка (пульсує червоним)
+            visor_pulse = 0.85 + 0.15 * math.sin(t * 8.0)
+            Color(1.0, 0.15, 0.25, 0.95 * visor_pulse)
+            Rectangle(pos=(cx - 14.0, cy + h * 0.62), size=(28.0, 6.0))
+            Color(1.0, 0.85, 0.3, 0.9)
+            Line(points=[cx - 14.0, cy + h * 0.65, cx + 14.0, cy + h * 0.65], width=1.2)
 
-            # 5. Рамка та неонові щитові лінії
-            Color(1.0, 0.3, 0.6, 0.75)
-            Line(rectangle=(self.x + 18, cy + 18, self.width - 36, self.height - 30), width=1.5)
+            # 5. Центральний термоядерний реактор темної матерії (пульсуюче ядро)
+            core_pulse = 1.0 + 0.14 * math.sin(t * 16.0)
+            core_r = 18.0 * core_pulse
+            Color(1.0, 0.2, 0.35, 0.35)
+            Ellipse(pos=(cx - core_r / 2.0, cy + 24.0 - (core_r - 18.0) / 2.0), size=(core_r, core_r))
+            Color(1.0, 0.22, 0.25, 0.95)
+            Ellipse(pos=(cx - 9.0, cy + 24.0), size=(18.0, 18.0))
+            Color(1.0, 0.95, 0.3, 1.0)
+            Ellipse(pos=(cx - 4.5, cy + 28.5), size=(9.0, 9.0))
+            Color(1.0, 1.0, 1.0, 0.98)
+            Ellipse(pos=(cx - 2.0, cy + 31.0), size=(4.0, 4.0))
+
+            # Обертові магнітні кільця стримування реактора
+            Color(0.9, 0.4, 1.0, 0.75)
+            Line(ellipse=(cx - 12.0, cy + 21.0, 24.0, 24.0), width=1.2)
+
+            # 6. Блимаючі бойові стробоскопи на крилах
+            strobe_b = math.sin(t * 10.0) > 0.0
+            Color(1.0, 0.15, 0.2, 0.95 if strobe_b else 0.25)
+            Ellipse(pos=(self.x + 1.0, cy + h * 0.75), size=(5.0, 5.0))
+            Ellipse(pos=(self.x + w - 6.0, cy + h * 0.75), size=(5.0, 5.0))
 
 
 def check_collision(rect_a: Widget, rect_b: Widget) -> bool:
@@ -1619,22 +1810,56 @@ def check_collision(rect_a: Widget, rect_b: Widget) -> bool:
 
 
 def create_explosion(
-    x: float, y: float, count: int = 24, base_color: tuple = (1.0, 0.5, 0.1, 1.0)
+    x: float, y: float, count: int = 24, base_color: tuple = (1.0, 0.55, 0.15, 1.0)
 ) -> list[Particle]:
-    """Створює спалах часточок вибуху."""
+    """Створює високодеталізований кінематографічний спалах вибуху (AAA Particle Burst)."""
     particles = []
-    for _ in range(count):
-        angle_speed = random.uniform(60.0, 240.0)
-        angle = random.uniform(0.0, 6.28318)
-        vx = angle_speed * random.uniform(0.5, 1.2) * (1 if random.random() > 0.5 else -1)
-        vy = angle_speed * random.uniform(0.5, 1.2) * (1 if random.random() > 0.5 else -1)
-        size = random.uniform(3.0, 7.0)
-        life = random.uniform(0.25, 0.55)
+    for i in range(count):
+        if i < 4:
+            # 1. Спалах високотемпературного білого ядра
+            spd = random.uniform(30.0, 110.0)
+            ang = random.uniform(0.0, 6.28318)
+            particles.append(
+                Particle(
+                    x,
+                    y,
+                    spd * math.cos(ang),
+                    spd * math.sin(ang),
+                    size=random.uniform(5.5, 9.5),
+                    max_life=random.uniform(0.18, 0.32),
+                    color=(1.0, 1.0, 0.95, 0.98),
+                )
+            )
+        elif i >= count - 4:
+            # 2. Швидкі іскри-шрапнель
+            spd = random.uniform(170.0, 340.0)
+            ang = random.uniform(0.0, 6.28318)
+            particles.append(
+                Particle(
+                    x,
+                    y,
+                    spd * math.cos(ang),
+                    spd * math.sin(ang),
+                    size=random.uniform(2.0, 3.8),
+                    max_life=random.uniform(0.35, 0.65),
+                    color=(1.0, 0.9, 0.35, 0.95),
+                )
+            )
+        else:
+            # 3. Вогняна плазмова сфера уламків
+            angle_speed = random.uniform(50.0, 240.0)
+            angle = random.uniform(0.0, 6.28318)
+            vx = angle_speed * math.cos(angle)
+            vy = angle_speed * math.sin(angle)
+            size = random.uniform(3.5, 7.5)
+            life = random.uniform(0.28, 0.58)
 
-        r = min(1.0, base_color[0] + random.uniform(-0.1, 0.1))
-        g = min(1.0, max(0.0, base_color[1] + random.uniform(-0.2, 0.2)))
-        b = min(1.0, max(0.0, base_color[2] + random.uniform(-0.1, 0.1)))
-        color = (r, g, b, 0.95)
+            r = min(1.0, base_color[0] + random.uniform(-0.08, 0.08))
+            g = min(1.0, max(0.0, base_color[1] + random.uniform(-0.18, 0.18)))
+            b = min(1.0, max(0.0, base_color[2] + random.uniform(-0.08, 0.08)))
+            color = (r, g, b, random.uniform(0.85, 0.98))
 
-        particles.append(Particle(x, y, vx, vy, size, life, color))
+            particles.append(Particle(x, y, vx, vy, size, life, color))
     return particles
+
+

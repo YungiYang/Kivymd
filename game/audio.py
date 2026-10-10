@@ -100,27 +100,39 @@ class AudioManager:
             except Exception:
                 pass
 
-        # 3. Біомні музичні треки з assets/audio
-        biome_bgm_files = {
-            "space": "bgm.wav",
-            "lava": "bgm_lava.wav",
-            "water": "bgm_water.wav",
-            "cyber_storm": "bgm_cyber.wav",
-            "ice": "bgm_ice.wav",
+        # 3. Високоякісні студійні саундтреки для всіх 9 біомів, боса та меню
+        biome_music_files = {
+            "space": ["bgm_space.mp3", "kulakovka-space-283176.mp3", "bgm.wav"],
+            "lava": ["bgm_lava.mp3", "bgm_lava.wav"],
+            "water": ["bgm_water.mp3", "bgm_water.wav"],
+            "cyber_storm": ["bgm_cyber.mp3", "bgm_cyber.wav"],
+            "ice": ["bgm_ice.mp3", "bgm_ice.wav"],
+            "toxic": ["bgm_toxic.mp3", "bgm.wav"],
+            "gravity": ["bgm_gravity.mp3", "bgm.wav"],
+            "void": ["bgm_void.mp3", "bgm.wav"],
+            "nebula": ["bgm_nebula.mp3", "bgm.wav"],
+            "boss": ["bgm_boss.mp3"],
+            "menu": ["bgm_menu.mp3"],
         }
-        for biome_id, fname in biome_bgm_files.items():
-            if biome_id in self._bgm_tracks:
-                continue  # Вже завантажено користувацький трек
-            path = os.path.join(AUDIO_DIR, fname)
-            if os.path.exists(path):
-                try:
-                    s = SoundLoader.load(path)
-                    if s:
-                        s.loop = True
-                        s.volume = 0.50
-                        self._bgm_tracks[biome_id] = s
-                except Exception:
-                    pass
+        for biome_id, candidate_files in biome_music_files.items():
+            # Шукаємо спочатку в assets/audio, потім у папці "звуки"
+            loaded = False
+            for fname in candidate_files:
+                for base_dir in [AUDIO_DIR, USER_AUDIO_DIR]:
+                    path = os.path.join(base_dir, fname)
+                    if os.path.exists(path) and os.path.getsize(path) > 1000:
+                        try:
+                            s = SoundLoader.load(path)
+                            if s:
+                                s.loop = True
+                                s.volume = 0.50
+                                self._bgm_tracks[biome_id] = s
+                                loaded = True
+                                break
+                        except Exception:
+                            pass
+                if loaded:
+                    break
 
         # Встановлюємо стартовий трек
         self._current_bgm = self._bgm_tracks.get("space")
@@ -166,6 +178,16 @@ class AudioManager:
                 self._bgm_playing = True
             except Exception:
                 pass
+
+    def play_boss_music(self):
+        """Вмикає напружений високотемповий саундтрек битви з босом-дредноутом."""
+        if "boss" in self._bgm_tracks:
+            self.play_biome_music("boss")
+
+    def play_menu_music(self):
+        """Вмикає стильний кіберпанк саундтрек для головного меню та ангару."""
+        if "menu" in self._bgm_tracks:
+            self.play_biome_music("menu")
 
     def start_music(self):
         """Запускає фонову музику для поточного біому."""

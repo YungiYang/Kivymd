@@ -1,5 +1,5 @@
 {
-  "credits": 122980,
+  "credits": 265330,
   "high_score": 73030,
   "unlocked_ships": [
     "striker",
@@ -9,14 +9,17 @@
     "nova_hunter",
     "phantom_shade"
   ],
-  "selected_ship": "striker",
-  "sound_enabled": true,
+  "selected_ship": "phantom_shade",
+  "sound_enabled": false,
   "music_enabled": true,
   "materials": {
-    "stellar_dust": 54,
-    "plasma_core": 1,
+    "stellar_dust": 152,
+    "plasma_core": 6,
     "quantum_alloy": 2,
-    "void_essence": 2
+    "void_essence": 2,
+    "hydro_crystal": 1,
+    "abyss_membrane": 2,
+    "cryo_fragment": 1
   },
   "crafted_ships": []
 }

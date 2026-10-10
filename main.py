@@ -13,6 +13,14 @@ from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivymd.uix.screenmanager import MDScreenManager
 
+# ─── Emoji font setup (до імпорту екранів!) ───────────────────────────────────
+# Реєструємо Segoe UI Emoji і патчимо MDLabel/MDButtonText щоб emoji
+# відображались коректно через Kivy SDL2 backend (markup + [font=...]).
+from game.emoji_font import setup_emoji_font, patch_kivymd_emoji
+_EMOJI_READY = setup_emoji_font()
+if _EMOJI_READY:
+    patch_kivymd_emoji()
+
 from game.menu_screen import MenuScreen
 from game.game_screen import GameScreen
 from game.game_over_screen import GameOverScreen

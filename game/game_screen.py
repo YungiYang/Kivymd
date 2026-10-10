@@ -252,7 +252,7 @@ class GameScreen(MDScreen):
             padding=[0, 2, 0, 2],
         )
         self.score_label = MDLabel(
-            text="SCORE: 0",
+            text="⭐ SCORE: 0",
             halign="center",
             theme_text_color="Custom",
             text_color=(0.2, 0.85, 1.0, 1.0),
@@ -265,7 +265,7 @@ class GameScreen(MDScreen):
 
         sub_info_box = BoxLayout(orientation="horizontal", size_hint=(1, None), height=20, spacing=4)
         self.credits_label = MDLabel(
-            text=f"🪙 {get_credits()}",
+            text=f"💠 {get_credits()}",
             halign="center",
             theme_text_color="Custom",
             text_color=(1.0, 0.85, 0.25, 1.0),
@@ -275,7 +275,7 @@ class GameScreen(MDScreen):
             size_hint=(0.5, 1),
         )
         self.level_badge_label = MDLabel(
-            text="🌌 РІВЕНЬ 1",
+            text="🌌 SECTOR 1",
             halign="center",
             theme_text_color="Custom",
             text_color=(0.5, 0.85, 1.0, 1.0),
@@ -294,22 +294,23 @@ class GameScreen(MDScreen):
         # Права кнопка паузи
         self.pause_btn = MDButton(
             MDButtonText(
-                text="II",
+                text="⏸️",
                 font_style="Title",
                 role="medium",
                 bold=True,
                 theme_text_color="Custom",
-                text_color=(1.0, 1.0, 1.0, 1.0),
+                text_color=(0.85, 0.92, 1.0, 1.0),
             ),
             style="filled",
             size_hint=(None, None),
             size=(52, 42),
             pos_hint={"center_y": 0.5},
             theme_bg_color="Custom",
-            md_bg_color=(0.18, 0.32, 0.52, 0.95),
+            md_bg_color=(0.12, 0.28, 0.50, 0.95),
         )
         self.pause_btn.bind(on_release=self.toggle_pause)
         self.hud_box.add_widget(self.pause_btn)
+
 
         self.root_layout.add_widget(self.hud_box)
 
@@ -363,7 +364,7 @@ class GameScreen(MDScreen):
         )
 
         self.boss_title_label = MDLabel(
-            text="☠️ БОС РІВЕНЬ 1",
+            text="☠️ ФЛАГМАН-БОСС СЕКТОРА 1",
             halign="center",
             theme_text_color="Custom",
             text_color=(1.0, 0.35, 0.45, 1.0),
@@ -429,7 +430,7 @@ class GameScreen(MDScreen):
         )
 
         self.boss_warning_label = MDLabel(
-            text="⚠️ УВАГА! НАБЛИЖАЄТЬСЯ ФЛАГМАН БОС! ⚠️",
+            text="⚠️ ALERT: HOSTILE DREADNOUGHT INCOMING! ⚠️",
             halign="center",
             theme_text_color="Custom",
             text_color=(1.0, 0.85, 0.2, 1.0),
@@ -437,6 +438,7 @@ class GameScreen(MDScreen):
             role="medium",
             bold=True,
             size_hint=(1, 1),
+
         )
         self.boss_warning_box.add_widget(self.boss_warning_label)
         self.root_layout.add_widget(self.boss_warning_box)
@@ -527,11 +529,11 @@ class GameScreen(MDScreen):
         )
 
         self.btn_left = MDButton(
-            MDButtonText(text="< ЛІВОРУЧ", font_style="Title", role="small"),
+            MDButtonText(text="◀️  ВЛЕВО", font_style="Title", role="small"),
             style="elevated",
             size_hint=(0.35, 1),
             theme_bg_color="Custom",
-            md_bg_color=(0.15, 0.25, 0.4, 0.7),
+            md_bg_color=(0.12, 0.22, 0.40, 0.75),
         )
         self.btn_left.min_state_time = 0.0
         self.btn_left.bind(
@@ -540,11 +542,11 @@ class GameScreen(MDScreen):
         self.controls_box.add_widget(self.btn_left)
 
         self.btn_fire = MDButton(
-            MDButtonText(text="ВОГОНЬ", font_style="Title", role="small"),
+            MDButtonText(text="💥  ОГОНЬ", font_style="Title", role="small"),
             style="filled",
             size_hint=(0.3, 1),
             theme_bg_color="Custom",
-            md_bg_color=(0.95, 0.3, 0.2, 0.85),
+            md_bg_color=(0.95, 0.25, 0.15, 0.9),
         )
         self.btn_fire.min_state_time = 0.0
         self.btn_fire.bind(
@@ -553,11 +555,11 @@ class GameScreen(MDScreen):
         self.controls_box.add_widget(self.btn_fire)
 
         self.btn_right = MDButton(
-            MDButtonText(text="ПРАВОРУЧ >", font_style="Title", role="small"),
+            MDButtonText(text="ВПРАВО  ▶️", font_style="Title", role="small"),
             style="elevated",
             size_hint=(0.35, 1),
             theme_bg_color="Custom",
-            md_bg_color=(0.15, 0.25, 0.4, 0.7),
+            md_bg_color=(0.12, 0.22, 0.40, 0.75),
         )
         self.btn_right.min_state_time = 0.0
         self.btn_right.bind(
@@ -616,7 +618,7 @@ class GameScreen(MDScreen):
         )
 
         pause_title = MDLabel(
-            text="ПАУЗА",
+            text="⏸  ПАУЗА",
             halign="center",
             theme_text_color="Custom",
             text_color=(0.2, 0.85, 1.0, 1.0),
@@ -629,17 +631,24 @@ class GameScreen(MDScreen):
         menu_card.add_widget(pause_title)
 
         self.resume_btn = MDButton(
-            MDButtonText(text="ПРОДОВЖИТИ", font_style="Title", role="medium"),
+            MDButtonText(
+                text="▶️  ПРОДОЛЖИТЬ",
+                font_style="Title",
+                role="medium",
+                bold=True,
+                theme_text_color="Custom",
+                text_color=(0.02, 0.05, 0.10, 1.0),
+            ),
             style="filled",
             size_hint=(1, None),
             height=48,
             theme_bg_color="Custom",
-            md_bg_color=(0.1, 0.7, 0.45, 1.0),
+            md_bg_color=(0.05, 0.88, 0.55, 1.0),
         )
         self.resume_btn.bind(on_release=self.resume_game)
         menu_card.add_widget(self.resume_btn)
 
-        sound_txt = "🔊 ЗВУКИ: УВІМК" if is_sound_enabled() else "🔇 ЗВУКИ: ВИМК"
+        sound_txt = "🔊 ЗВУК: ВКЛ" if is_sound_enabled() else "🔇 ЗВУК: ВЫКЛ"
         self.pause_sound_btn = MDButton(
             MDButtonText(text=sound_txt, font_style="Title", role="small"),
             style="outlined",
@@ -649,7 +658,7 @@ class GameScreen(MDScreen):
         self.pause_sound_btn.bind(on_release=self._toggle_sound_pause)
         menu_card.add_widget(self.pause_sound_btn)
 
-        music_txt = "🎵 МУЗИКА: УВІМК" if is_music_enabled() else "🔇 МУЗИКА: ВИМК"
+        music_txt = "🎵 МУЗЫКА: ВКЛ" if is_music_enabled() else "🔇 МУЗЫКА: ВЫКЛ"
         self.pause_music_btn = MDButton(
             MDButtonText(text=music_txt, font_style="Title", role="small"),
             style="outlined",
@@ -661,11 +670,11 @@ class GameScreen(MDScreen):
 
         self.menu_btn = MDButton(
             MDButtonText(
-                text="ГОЛОВНЕ МЕНЮ",
+                text="🏠  ГЛАВНОЕ МЕНЮ",
                 font_style="Title",
                 role="small",
                 theme_text_color="Custom",
-                text_color=(0.9, 0.4, 0.4, 1.0),
+                text_color=(0.95, 0.42, 0.42, 1.0),
             ),
             style="outlined",
             size_hint=(1, None),
@@ -675,6 +684,7 @@ class GameScreen(MDScreen):
         menu_card.add_widget(self.menu_btn)
 
         self.pause_overlay.add_widget(menu_card)
+
 
     def _update_card_canvas(self, card):
         if hasattr(self, "card_bg"):
@@ -692,13 +702,14 @@ class GameScreen(MDScreen):
         active = get_audio_manager().toggle_sound()
         for child in self.pause_sound_btn.children:
             if isinstance(child, MDButtonText):
-                child.text = "🔊 ЗВУКИ: УВІМК" if active else "🔇 ЗВУКИ: ВИМК"
+                child.text = "🔊 ЗВУК: ВКЛ" if active else "🔇 ЗВУК: ВЫКЛ"
 
     def _toggle_music_pause(self, *args):
         active = get_audio_manager().toggle_music()
         for child in self.pause_music_btn.children:
             if isinstance(child, MDButtonText):
-                child.text = "🎵 МУЗИКА: УВІМК" if active else "🔇 МУЗИКА: ВИМК"
+                child.text = "🎵 МУЗЫКА: ВКЛ" if active else "🔇 МУЗЫКА: ВЫКЛ"
+
 
     def _set_shooting(self, active: bool):
         self.is_shooting = active
@@ -887,17 +898,18 @@ class GameScreen(MDScreen):
         self.level_banner_active = True
         self.level_banner_timer = 3.8
         self.level_banner_box.opacity = 1.0
-        self.level_title_label.text = f"🚀 РІВЕНЬ {self.current_level}: {cfg.name} {cfg.icon}"
-        self.level_hazard_label.text = f"⚠️ {cfg.hazard_text}"
+        self.level_title_label.text = f"🌌 SECTOR {self.current_level}: {cfg.name} {cfg.icon}"
+        self.level_hazard_label.text = f"⚠️  HAZARD: {cfg.hazard_text}"
 
         # 5. Спливаючий текст у центрі екрана
         screen_w = max(self.width, 100.0)
         screen_h = max(self.height, 100.0)
         self._spawn_floating_text(
-            f"🚀 ГІПЕРСТРИБОК: {cfg.name}!",
+            f"🚀 WARP JUMP: {cfg.name}!",
             screen_w / 2.0,
             screen_h / 2.0 + 35.0,
             color=cfg.accent_color,
+
         )
 
         self._update_hud()
@@ -1280,6 +1292,7 @@ class GameScreen(MDScreen):
 
         self.game_area.add_widget(self.boss)
         self._show_boss_hud()
+        get_audio_manager().play_boss_music()
         cfg = get_biome_config(self.current_biome)
         self._spawn_floating_text(
             f"{boss_prefix}: {cfg.name} {cfg.icon}!",
@@ -1358,6 +1371,7 @@ class GameScreen(MDScreen):
         self.boss = None
         self._hide_boss_hud()
         self.next_boss_score = self.score + 2500 + self.boss_level * 1200
+        get_audio_manager().play_biome_music(self.current_biome)
 
     def _handle_bullet_collisions(self):
         """Перевіряє зіткнення куль із ворогами та гравцем (з накладанням ефектів біомів)."""
@@ -1775,12 +1789,13 @@ class GameScreen(MDScreen):
         if hasattr(self, "hp_bar_widget") and hasattr(self, "hp_fill_rect"):
             self.hp_fill_rect.size = (self.hp_bar_widget.width * ratio, self.hp_bar_widget.height)
 
-        self.score_label.text = f"SCORE: {self.score}"
-        self.credits_label.text = f"🪙 {get_credits()}"
+        self.score_label.text = f"⭐ SCORE: {self.score}"
+        self.credits_label.text = f"💠 {get_credits()}"
 
         cfg = get_biome_config(self.current_biome)
         if hasattr(self, "level_badge_label"):
-            self.level_badge_label.text = f"{cfg.icon} РІВЕНЬ {self.current_level}"
+            self.level_badge_label.text = f"{cfg.icon} SECTOR {self.current_level}"
+
 
     def _update_hp_bar_canvas(self, *args):
         if hasattr(self, "hp_track_rect") and hasattr(self, "hp_bar_widget"):
@@ -1801,8 +1816,9 @@ class GameScreen(MDScreen):
         title_idx = min(len(titles) - 1, max(0, self.boss_level - 1))
         boss_title = titles[title_idx]
         cfg = get_biome_config(self.current_biome)
-        self.boss_title_label.text = f"☠️ {boss_title} ({cfg.name})"
+        self.boss_title_label.text = f"☠️ {boss_title} // СЕКТОР {self.current_level} ({cfg.name})"
         self.boss_bar_box.opacity = 1.0
+
         self._update_boss_hud()
 
     def _update_boss_hud(self):

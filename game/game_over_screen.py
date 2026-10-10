@@ -1,5 +1,4 @@
-"""Екран Game Over із результатами гри, кредитами та переходом в ангар."""
-
+from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.graphics import Color, RoundedRectangle, Line
 from kivymd.uix.screen import MDScreen
@@ -10,13 +9,15 @@ from game.storage import get_credits, get_high_score, update_high_score
 
 
 class GameOverScreen(MDScreen):
-    """Екран завершення гри з кібер-оформленням."""
+    """Екран завершення гри з кібер-оформленням (AAA Combat Debrief)."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.name = "game_over_screen"
         self.score = 0
+        self._anim_event = None
         self._build_ui()
+
 
     def _build_ui(self):
         # 1. Зоряний фон
@@ -36,10 +37,10 @@ class GameOverScreen(MDScreen):
             orientation="vertical", size_hint=(1, None), height=110, spacing=6
         )
         game_over_label = MDLabel(
-            text="КОРАБЕЛЬ ЗНИЩЕНО",
+            text="💀  КОРАБЛЬ УНИЧТОЖЕН",
             halign="center",
             theme_text_color="Custom",
-            text_color=(1.0, 0.25, 0.32, 1.0),
+            text_color=(1.0, 0.18, 0.28, 1.0),
             font_style="Display",
             role="small",
             bold=True,
@@ -47,10 +48,10 @@ class GameOverScreen(MDScreen):
             height=48,
         )
         subtitle = MDLabel(
-            text="— МІСІЮ ПЕРЕРВАНО —",
+            text="—  МИССИЯ ПРОВАЛЕНА  —",
             halign="center",
             theme_text_color="Custom",
-            text_color=(0.85, 0.45, 0.5, 0.9),
+            text_color=(0.85, 0.35, 0.45, 0.9),
             font_style="Title",
             role="small",
             bold=True,
@@ -91,7 +92,7 @@ class GameOverScreen(MDScreen):
         )
 
         self.score_label = MDLabel(
-            text="📊 НАБРАНІ ОЧКИ: 0",
+            text="📊  ОЧКОВ НАБРАНО: 0",
             halign="center",
             theme_text_color="Custom",
             text_color=(0.2, 0.9, 1.0, 1.0),
@@ -102,7 +103,7 @@ class GameOverScreen(MDScreen):
             height=32,
         )
         self.high_score_label = MDLabel(
-            text="🏆 НАЙКРАЩИЙ РЕКОРД: 0",
+            text="🏆  РЕКОРД СЕССИИ: 0",
             halign="center",
             theme_text_color="Custom",
             text_color=(1.0, 0.85, 0.2, 1.0),
@@ -113,7 +114,7 @@ class GameOverScreen(MDScreen):
             height=26,
         )
         self.credits_label = MDLabel(
-            text="🪙 БАЛАНС КРЕДИТІВ: 0",
+            text="💠  КРЕДИТЫ НА СЧЕТУ: 0",
             halign="center",
             theme_text_color="Custom",
             text_color=(1.0, 0.85, 0.25, 1.0),
@@ -137,22 +138,29 @@ class GameOverScreen(MDScreen):
             padding=[8, 8, 8, 8],
         )
 
-        # Кнопка «Грати знову»
+        # Кнопка «Снова в бой!»
         restart_btn = MDButton(
-            MDButtonText(text="🔄 ГРАТИ ЗНОВУ", font_style="Title", role="medium", bold=True),
+            MDButtonText(
+                text="🚀  СНОВА В БОЙ!",
+                font_style="Title",
+                role="medium",
+                bold=True,
+                theme_text_color="Custom",
+                text_color=(0.02, 0.05, 0.10, 1.0),
+            ),
             style="filled",
             size_hint=(1, None),
             height=52,
             theme_bg_color="Custom",
-            md_bg_color=(0.1, 0.75, 0.45, 1.0),
+            md_bg_color=(0.1, 0.85, 0.5, 1.0),
         )
         restart_btn.bind(on_release=self._restart_game)
         btn_box.add_widget(restart_btn)
 
-        # Кнопка «Ангар кораблів»
+        # Кнопка «Ангар кораблей»
         hangar_btn = MDButton(
             MDButtonText(
-                text="🛸 АНГАР / МАГАЗИН КОРАБЛІВ",
+                text="🛸  АНГАР КОРАБЛЕЙ",
                 font_style="Title",
                 role="medium",
                 bold=True,
@@ -168,14 +176,14 @@ class GameOverScreen(MDScreen):
         hangar_btn.bind(on_release=self._to_hangar)
         btn_box.add_widget(hangar_btn)
 
-        # Кнопка «Головне меню»
+        # Кнопка «Главное меню»
         menu_btn = MDButton(
             MDButtonText(
-                text="🏠 ГОЛОВНЕ МЕНЮ",
+                text="◀️  ГЛАВНОЕ МЕНЮ",
                 font_style="Title",
                 role="small",
                 theme_text_color="Custom",
-                text_color=(0.85, 0.9, 1.0, 1.0),
+                text_color=(0.75, 0.85, 1.0, 1.0),
             ),
             style="outlined",
             size_hint=(1, None),
@@ -186,6 +194,7 @@ class GameOverScreen(MDScreen):
 
         root_layout.add_widget(btn_box)
         self.add_widget(root_layout)
+
 
     def _update_card_rect(self, card):
         if hasattr(self, "card_bg"):
@@ -204,13 +213,27 @@ class GameOverScreen(MDScreen):
         self.score = score
         update_high_score(score)
         hs = get_high_score()
-        self.score_label.text = f"📊 НАБРАНІ ОЧКИ: {score}"
-        self.high_score_label.text = f"🏆 НАЙКРАЩИЙ РЕКОРД: {hs}"
-        self.credits_label.text = f"🪙 БАЛАНС КРЕДИТІВ: {get_credits()}"
+        self.score_label.text = f"📊  ОЧКОВ НАБРАНО: {score}"
+        self.high_score_label.text = f"🏆  РЕКОРД СЕССИИ: {hs}"
+        self.credits_label.text = f"💠  КРЕДИТЫ НА СЧЕТУ: {get_credits()}"
 
     def on_pre_enter(self, *args):
-        self.credits_label.text = f"🪙 БАЛАНС КРЕДИТІВ: {get_credits()}"
-        self.high_score_label.text = f"🏆 НАЙКРАЩИЙ РЕКОРД: {get_high_score()}"
+        self.credits_label.text = f"💠  КРЕДИТЫ НА СЧЕТУ: {get_credits()}"
+        self.high_score_label.text = f"🏆  РЕКОРД СЕССИИ: {get_high_score()}"
+
+    def on_enter(self, *args):
+        self._anim_event = Clock.schedule_interval(self._on_anim_tick, 1.0 / 30.0)
+
+    def on_leave(self, *args):
+        if hasattr(self, "_anim_event") and self._anim_event:
+            Clock.unschedule(self._anim_event)
+            self._anim_event = None
+
+    def _on_anim_tick(self, dt: float):
+        if hasattr(self, "bg") and self.bg:
+            self.bg.update(dt)
+
+
 
     def _restart_game(self, *args):
         """Перезапускає нову гру."""

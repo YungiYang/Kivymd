@@ -8,6 +8,20 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.button import MDButton, MDButtonText
 
 
+_upgrade_applied_counts: dict[str, int] = {}
+
+
+def reset_upgrade_counts():
+    """Resets the applied counts — call at the start of each new game."""
+    global _upgrade_applied_counts
+    _upgrade_applied_counts.clear()
+
+
+def record_upgrade_applied(uid: str):
+    """Records that an upgrade was applied — increments its stack counter."""
+    _upgrade_applied_counts[uid] = _upgrade_applied_counts.get(uid, 0) + 1
+
+
 class Upgrade:
     """Модель конкретного покращення корабля гравця."""
 
@@ -19,6 +33,8 @@ class Upgrade:
         icon: str,
         color: tuple,
         apply_fn,
+        tier: int = 1,
+        max_stack: int = 3,
     ):
         self.uid = uid
         self.title = title
@@ -26,6 +42,8 @@ class Upgrade:
         self.icon = icon
         self.color = color  # RGBA
         self.apply_fn = apply_fn
+        self.tier = tier
+        self.max_stack = max_stack
 
     def apply(self, player):
         """Застосовує ефект покращення до сутності гравця."""
@@ -46,6 +64,8 @@ def get_random_upgrades(player, count: int = 3) -> list[Upgrade]:
                 icon="💥",
                 color=(1.0, 0.35, 0.8, 1.0),
                 apply_fn=lambda p: setattr(p, "shot_level", 2),
+                tier=2,
+                max_stack=1,
             )
         )
     elif player.shot_level == 2:
@@ -57,6 +77,8 @@ def get_random_upgrades(player, count: int = 3) -> list[Upgrade]:
                 icon="✨",
                 color=(1.0, 0.3, 0.9, 1.0),
                 apply_fn=lambda p: setattr(p, "shot_level", 3),
+                tier=3,
+                max_stack=1,
             )
         )
 
@@ -145,6 +167,198 @@ def get_random_upgrades(player, count: int = 3) -> list[Upgrade]:
         )
     )
 
+    # 8. Плазмове насичення
+    available.append(
+        Upgrade(
+            uid="plasma_infusion",
+            title="Плазмове насичення",
+            desc="+16 шкоди та +40 до швидкості куль",
+            icon="🔥",
+            color=(1.0, 0.42, 0.18, 1.0),
+            apply_fn=lambda p: (
+                setattr(p, "bullet_damage", p.bullet_damage + 16),
+                setattr(p, "bullet_speed", min(1200.0, p.bullet_speed + 40)),
+            ),
+        )
+    )
+
+    # 9. Кріогенне гартування
+    available.append(
+        Upgrade(
+            uid="cryo_rounds",
+            title="Кріогенне гартування",
+            desc="+12 шкоди та +30 до швидкості куль",
+            icon="❄️",
+            color=(0.45, 0.85, 1.0, 1.0),
+            apply_fn=lambda p: (
+                setattr(p, "bullet_damage", p.bullet_damage + 12),
+                setattr(p, "bullet_speed", min(1200.0, p.bullet_speed + 30)),
+            ),
+        )
+    )
+
+    # 10. Квантовий оверклокінг
+    available.append(
+        Upgrade(
+            uid="quantum_overclock",
+            title="Квантовий оверклокінг",
+            desc="-35% перезарядки + +10% швидкості корабля",
+            icon="⚛️",
+            color=(0.55, 0.95, 0.4, 1.0),
+            apply_fn=lambda p: (
+                setattr(p, "fire_cooldown", max(0.06, p.fire_cooldown * 0.65)),
+                setattr(p, "speed", min(580.0, p.speed * 1.10)),
+            ),
+        )
+    )
+
+    # 11. Важкий калібр
+    available.append(
+        Upgrade(
+            uid="heavy_calibre",
+            title="Важкий калібр",
+            desc="+28 до шкоди кожного влучання",
+            icon="💣",
+            color=(1.0, 0.62, 0.1, 1.0),
+            apply_fn=lambda p: setattr(p, "bullet_damage", p.bullet_damage + 28),
+        )
+    )
+
+    # 12. Перевантаження Егіди
+    available.append(
+        Upgrade(
+            uid="aegis_overcharge",
+            title="Перевантаження Егіди",
+            desc="+3 заряди щита — пасивний захист",
+            icon="🛡️",
+            color=(0.2, 0.6, 1.0, 1.0),
+            apply_fn=lambda p: (
+                setattr(p, "shield", p.shield + 3),
+                p.redraw(),
+            ),
+        )
+    )
+
+    # 13. Наніти-ремонтники
+    available.append(
+        Upgrade(
+            uid="nanite_repair",
+            title="Наніти-ремонтники",
+            desc="+35 до макс. HP та повне відновлення",
+            icon="🧬",
+            color=(0.15, 1.0, 0.55, 1.0),
+            apply_fn=lambda p: (
+                setattr(p, "max_hp", p.max_hp + 35),
+                setattr(p, "hp", p.max_hp),
+            ),
+        )
+    )
+
+    # 14. Імпульсний форсаж
+    available.append(
+        Upgrade(
+            uid="impulse_afterburner",
+            title="Імпульсний форсаж",
+            desc="+35% до швидкості корабля (max 580)",
+            icon="💨",
+            color=(0.35, 0.95, 0.75, 1.0),
+            apply_fn=lambda p: setattr(p, "speed", min(580.0, p.speed * 1.35)),
+        )
+    )
+
+    # 15. Тахіонний прискорювач
+    available.append(
+        Upgrade(
+            uid="tachyon_accelerator",
+            title="Тахіонний прискорювач",
+            desc="+45% швидкості куль та +12 шкоди",
+            icon="💫",
+            color=(0.75, 0.55, 1.0, 1.0),
+            apply_fn=lambda p: (
+                setattr(p, "bullet_speed", min(1200.0, p.bullet_speed * 1.45)),
+                setattr(p, "bullet_damage", p.bullet_damage + 12),
+            ),
+        )
+    )
+
+    # 16. Матриця критичного фокусу
+    available.append(
+        Upgrade(
+            uid="critical_matrix",
+            title="Матриця критичного фокусу",
+            desc="+22 шкоди та -15% перезарядки",
+            icon="🎯",
+            color=(1.0, 0.35, 0.6, 1.0),
+            apply_fn=lambda p: (
+                setattr(p, "bullet_damage", p.bullet_damage + 22),
+                setattr(p, "fire_cooldown", max(0.06, p.fire_cooldown * 0.85)),
+            ),
+        )
+    )
+
+    # 17. Антиматеріальний заряд
+    available.append(
+        Upgrade(
+            uid="antimatter_warhead",
+            title="Антиматеріальний заряд",
+            desc="+36 до шкоди — найпотужніший удар",
+            icon="☢️",
+            color=(1.0, 0.22, 0.22, 1.0),
+            apply_fn=lambda p: setattr(p, "bullet_damage", p.bullet_damage + 36),
+        )
+    )
+
+    # 18. Хроно-стабілізатор систем
+    available.append(
+        Upgrade(
+            uid="chrono_stabilizer",
+            title="Хроно-стабілізатор",
+            desc="-15% перезарядки, +15% швидкості, +15 HP",
+            icon="⏳",
+            color=(0.85, 0.75, 0.25, 1.0),
+            apply_fn=lambda p: (
+                setattr(p, "fire_cooldown", max(0.06, p.fire_cooldown * 0.85)),
+                setattr(p, "speed", min(580.0, p.speed * 1.15)),
+                setattr(p, "max_hp", p.max_hp + 15),
+                setattr(p, "hp", min(p.max_hp, p.hp + 15)),
+            ),
+        )
+    )
+
+    # 19. Ядро Зоряного Фенікса
+    available.append(
+        Upgrade(
+            uid="stellar_phoenix_core",
+            title="Ядро Зоряного Фенікса",
+            desc="+2 щита, +20 HP, +14 шкоди — легендарний",
+            icon="🌟",
+            color=(1.0, 0.88, 0.22, 1.0),
+            apply_fn=lambda p: (
+                setattr(p, "shield", p.shield + 2),
+                p.redraw(),
+                setattr(p, "max_hp", p.max_hp + 20),
+                setattr(p, "hp", min(p.max_hp, p.hp + 20)),
+                setattr(p, "bullet_damage", p.bullet_damage + 14),
+            ),
+        )
+    )
+
+    # 20. Нейронна синхронізація
+    available.append(
+        Upgrade(
+            uid="neural_sync",
+            title="Нейронна синхронізація",
+            desc="-20% перезарядки, +8 шкоди, +10% швидкості",
+            icon="🧠",
+            color=(0.5, 0.85, 1.0, 1.0),
+            apply_fn=lambda p: (
+                setattr(p, "fire_cooldown", max(0.06, p.fire_cooldown * 0.80)),
+                setattr(p, "bullet_damage", p.bullet_damage + 8),
+                setattr(p, "speed", min(580.0, p.speed * 1.10)),
+            ),
+        )
+    )
+
     pick_count = min(count, len(available))
     return random.sample(available, pick_count)
 
@@ -158,20 +372,28 @@ class UpgradeCard(BoxLayout):
         self.on_select = on_select
         self.orientation = "horizontal"
         self.size_hint = (1, None)
-        self.height = 92
-        self.padding = [12, 6, 12, 6]
-        self.spacing = 8
+        self.height = 94
+        self.padding = [14, 6, 12, 6]
+        self.spacing = 10
 
-        # Напівпрозорий темний фон картки з неоновим обрамленням
+        # Напівпрозорий темний фон картки з неоновим обрамленням та акцентною смужкою
         with self.canvas.before:
-            Color(0.08, 0.12, 0.22, 0.95)
+            Color(0.04, 0.07, 0.15, 0.94)
             self.bg_rect = RoundedRectangle(
-                pos=self.pos, size=self.size, radius=[10]
+                pos=self.pos, size=self.size, radius=[12]
             )
             r, g, b, _ = upgrade.color
-            Color(r, g, b, 0.85)
+            # Акцентна неонова енергетична смужка зліва
+            Color(r, g, b, 0.95)
+            self.accent_bar = RoundedRectangle(
+                pos=(self.x + 4, self.y + 8),
+                size=(4, max(1, self.height - 16)),
+                radius=[2],
+            )
+            # Неонова рамка
+            Color(r, g, b, 0.75)
             self.border_line = Line(
-                rounded_rectangle=[self.x, self.y, self.width, self.height, 10],
+                rounded_rectangle=[self.x, self.y, self.width, self.height, 12],
                 width=1.5,
             )
 
@@ -183,7 +405,7 @@ class UpgradeCard(BoxLayout):
             halign="center",
             valign="center",
             size_hint=(None, 1),
-            width=42,
+            width=44,
             font_style="Headline",
             role="medium",
         )
@@ -218,10 +440,10 @@ class UpgradeCard(BoxLayout):
         text_box.add_widget(self.desc_label)
         self.add_widget(text_box)
 
-        # 3. Кнопка «ВИБРАТИ»
+        # 3. Кнопка «УСТАНОВИТИ»
         self.select_btn = MDButton(
             MDButtonText(
-                text="ВИБРАТИ",
+                text="🚀 УСТАНОВИТИ",
                 font_style="Label",
                 role="large",
                 bold=True,
@@ -230,7 +452,7 @@ class UpgradeCard(BoxLayout):
             ),
             style="filled",
             size_hint=(None, None),
-            size=(88, 42),
+            size=(96, 42),
             pos_hint={"center_y": 0.5},
             theme_bg_color="Custom",
             md_bg_color=upgrade.color,
@@ -250,12 +472,14 @@ class UpgradeCard(BoxLayout):
     def _update_canvas(self, *args):
         self.bg_rect.pos = self.pos
         self.bg_rect.size = self.size
+        self.accent_bar.pos = (self.x + 4, self.y + 8)
+        self.accent_bar.size = (4, max(1, self.height - 16))
         self.border_line.rounded_rectangle = [
             self.x,
             self.y,
             self.width,
             self.height,
-            10,
+            12,
         ]
 
 
@@ -268,7 +492,7 @@ class UpgradeOverlay(FloatLayout):
 
         # Напівпрозоре затемнення ігрового поля
         with self.canvas.before:
-            Color(0.02, 0.04, 0.08, 0.88)
+            Color(0.01, 0.03, 0.07, 0.90)
             self.dim_rect = Rectangle(pos=self.pos, size=self.size)
         self.bind(
             pos=lambda *a: setattr(self.dim_rect, "pos", self.pos),
@@ -279,26 +503,26 @@ class UpgradeOverlay(FloatLayout):
         self.card_container = BoxLayout(
             orientation="vertical",
             size_hint=(None, None),
-            size=(370, 460),
+            size=(380, 470),
             pos_hint={"center_x": 0.5, "center_y": 0.5},
-            padding=[14, 14, 14, 14],
+            padding=[16, 16, 16, 16],
             spacing=8,
         )
         with self.card_container.canvas.before:
-            Color(0.05, 0.08, 0.16, 0.98)
+            Color(0.03, 0.06, 0.13, 0.98)
             self.modal_bg = RoundedRectangle(
                 pos=self.card_container.pos,
                 size=self.card_container.size,
-                radius=[16],
+                radius=[18],
             )
-            Color(0.2, 0.85, 1.0, 0.85)
+            Color(0.18, 0.75, 1.0, 0.85)
             self.modal_border = Line(
                 rounded_rectangle=[
                     self.card_container.x,
                     self.card_container.y,
                     self.card_container.width,
                     self.card_container.height,
-                    16,
+                    18,
                 ],
                 width=2.0,
             )
@@ -309,13 +533,13 @@ class UpgradeOverlay(FloatLayout):
 
         # Заголовок
         self.title_label = MDLabel(
-            text="⭐ ПОКРАЩЕННЯ ⭐",
+            text="[ ТАКТИЧНА МОДЕРНІЗАЦІЯ // UPGRADE ]",
             halign="center",
             bold=True,
-            font_style="Headline",
-            role="small",
+            font_style="Title",
+            role="large",
             theme_text_color="Custom",
-            text_color=(1.0, 0.85, 0.25, 1.0),
+            text_color=(1.0, 0.82, 0.25, 1.0),
             size_hint=(1, None),
             height=34,
         )
@@ -323,12 +547,12 @@ class UpgradeOverlay(FloatLayout):
 
         # Підзаголовок з досягнутим рахунком
         self.subtitle_label = MDLabel(
-            text="Досягнуто 1000 очок! Оберіть покращення:",
+            text="⚡ ДОСЯГНУТО РУБІЖ // ОБЕРІТЬ ПРОТОКОЛ:",
             halign="center",
             font_style="Body",
             role="medium",
             theme_text_color="Custom",
-            text_color=(0.7, 0.85, 1.0, 0.95),
+            text_color=(0.7, 0.88, 1.0, 0.95),
             size_hint=(1, None),
             height=26,
         )
@@ -348,8 +572,8 @@ class UpgradeOverlay(FloatLayout):
 
     def _on_overlay_resize(self, *args):
         if self.width > 50 and self.height > 50:
-            self.card_container.width = min(370, max(280, self.width - 24))
-            self.card_container.height = min(460, max(360, self.height - 30))
+            self.card_container.width = min(380, max(280, self.width - 24))
+            self.card_container.height = min(470, max(360, self.height - 30))
 
     def _update_modal_canvas(self, *args):
         self.modal_bg.pos = self.card_container.pos
@@ -359,7 +583,7 @@ class UpgradeOverlay(FloatLayout):
             self.card_container.y,
             self.card_container.width,
             self.card_container.height,
-            16,
+            18,
         ]
 
     def show_cards(
@@ -374,7 +598,7 @@ class UpgradeOverlay(FloatLayout):
         self.cards_list.clear_widgets()
         self.current_cards.clear()
         self.subtitle_label.text = (
-            f"Рівень #{upgrade_level} ({score} оч.) | Наступне: +{next_cost} очок"
+            f"ПРОТОКОЛ #{upgrade_level} ({score} оч.) | Наступний: +{next_cost} очок"
         )
         for u in upgrades:
             card = UpgradeCard(upgrade=u, on_select=on_select)
